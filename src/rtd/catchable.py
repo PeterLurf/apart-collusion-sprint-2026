@@ -25,9 +25,11 @@ FPR = 0.05
 
 
 def load_scores(meta_dir: Path = DATA_DIR / "acts_meta") -> list[dict]:
-    """Cached monitor suspicion per snippet x reader (key-before placement, training carriers only)."""
+    """Cached monitor suspicion per snippet x reader (key-before placement, training carriers only).
+    benignext_*: the benign reader on the catchable problems outside its 100-problem subset (behavioral table
+    only; the mechanism analyses read full_* and keep the original subset)."""
     rows = []
-    for p in sorted(glob.glob(str(meta_dir / "full_*.json"))):
+    for p in sorted(glob.glob(str(meta_dir / "full_*.json")) + glob.glob(str(meta_dir / "benignext_*.json"))):
         with open(p, encoding="utf-8") as fh:
             rows += json.load(fh)["rows"]
     return [r for r in rows if r["placement"] == "before" and r["instance"] not in HARD_EVAL]

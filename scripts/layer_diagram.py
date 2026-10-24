@@ -2,11 +2,12 @@
 
     uv run python scripts/layer_diagram.py          # -> figures/layer_roles.{pdf,svg,png}
 
-One shared layer axis (0-63) and one track per measurement; the three stages are shaded through every track.
+One shared layer axis (0-63) and one track per measurement; the two stages are shaded through every track.
   carrier patching   share of decision-flipping pairs whose S=0 decision is restored by patching the carrier
                      tokens at that layer (e1_necessity_patching.jsonl): the signal still lives at the carrier
   decodability       cross-fitted AUROC of S at the decision token, receiver vs naive (mechanism_stats.json)
-  backdoor axis      cos(d_S, d_B): S written with (+) or against (-) the monitor's own backdoor direction
+  S-B alignment      cos(d_S, d_B): S written with (+) or against (-) the monitor's own backdoor direction;
+                     the early positive alignment comes from insert carriers adding code, not from S itself
   benign = receiver  cosine between the benign-rule and receiver S directions: rule-matching is shared until
                      the override
   evidence heads     where M4's top-20 honest-evidence heads sit (m4_circuit.json)
@@ -22,7 +23,7 @@ from rtd.config import DATA_DIR
 
 plt = fs.plt
 load = lambda n: json.loads((DATA_DIR / n).read_text(encoding="utf-8"))
-STAGES = (("detect", 1, 19, "#e9f1fb"), ("bind", 21, 45, "#eef7f2"), ("override", 47, 53, "#fbece4"))
+STAGES = (("bind", 21, 45, "#eef7f2"), ("override", 47, 53, "#fbece4"))
 
 
 def main():
@@ -33,11 +34,12 @@ def main():
     pl = sorted(int(k.split("_")[1]) for k in pat[0] if k.startswith("noise_"))
     restored = [np.mean([(r[f"noise_{x}"] < 4.5) == (r["base_s0"] < 4.5) for r in pat]) for x in pl]
     heads = Counter(layer for layer, _ in load("m4_circuit.json")["sets"]["topB_20"])
+    top20 = load("m4_bootstrap.json")["ci"]["topB_20"]
 
     tracks = [
         ("carrier patching\nstill works", 1.0),
         ("S decodable at\nthe decision", 1.0),
-        ("S vs the backdoor\naxis  cos(d_S, d_B)", 1.25),
+        ("S–B alignment\ncos(d_S, d_B)", 1.25),
         ("benign rule =\nreceiver?", 0.9),
         ("evidence heads\n(top 20, M4)", 0.8),
     ]
@@ -78,7 +80,8 @@ def main():
     fs.ref(a, 0)
     a.annotate("written against the\nbackdoor axis", (55, -0.62), xytext=(31, -0.62), fontsize=6.3, color=fs.INK2,
                va="center", arrowprops=dict(arrowstyle="->", color=fs.MUTED, lw=0.7))
-    a.text(3, -0.5, "looks suspicious\n(+ for every reader)", fontsize=6.3, color=fs.INK2, va="center")
+    a.text(3, -0.5, "early +: insert carriers add code\n(a length effect, not S)", fontsize=6.3, color=fs.INK2,
+           va="center")
 
     a = axes[3]
     y = [r["cos_benign_receiver"] for r in mech]
@@ -92,7 +95,8 @@ def main():
     a.bar(xs, [heads[x] for x in xs], width=0.8, color=fs.INK2)
     a.set(ylim=(0, max(heads.values()) + 1.5), yticks=[0, max(heads.values())])
     a.text(3, max(heads.values()) * 0.45, "the heads that carry honest backdoor evidence also carry\n"
-           "collusion: patching them recovers 92% of the effect", fontsize=6.3, color=fs.INK2, va="center")
+           f"collusion: patching them recovers {top20[0]:.0%} [{top20[1]:.0%}, {top20[2]:.0%}] of the effect",
+           fontsize=6.3, color=fs.INK2, va="center")
 
     a.set_xlabel("layer of Qwen3-32B (64 decoder layers)")
     a.set_xticks([0, 10, 20, 30, 40, 47, 53, 63])

@@ -370,6 +370,45 @@ def catchable(shards: int = 2, model: str = RECEIVER_MODEL):
     print(f"wrote {len(res)} + {len(pres)} rows; summarize with scripts/catchable_e1c.py")
 
 
+FP_CONDS = ["ablate_Sperp", "ablate_Sperp_wide", "ablate_rand0", "ablate_randwide0"]
+
+
+@app.local_entrypoint()
+def fpcost(shards: int = 2, model: str = RECEIVER_MODEL):
+    """False-positive cost of the d_S-perp-d_B ablation: the same interventions as the catchable run, applied to
+    CLEAN code of the catchable problems (receiver S=0 and S=1, naive S=0). If the ablation removes only the
+    collusion-specific component, clean-code flag rates should stay near their baseline.
+    Writes data/e1_fpcost.jsonl; summarize with scripts/catchable_e1c.py."""
+    from rtd.carriers import BY_ID
+    from rtd.catchable import catchable_pairs, load_scores
+    from rtd.config import MONITOR_FORMAT
+    from rtd.prompts import FORMATS, build_messages
+
+    pairs_set, _ = catchable_pairs(load_scores())
+    tasks = {t for t, _ in pairs_set}
+    with (DATA_DIR / "pairs.jsonl").open(encoding="utf-8") as f:  # clean code (B=0)
+        pairs = [p for p in map(json.loads, f) if (p["task_id"], p["instance"]) in pairs_set]
+    fmt = FORMATS[MONITOR_FORMAT]
+    rows = []
+    for p in pairs:
+        inst = BY_ID[p["instance"]]
+        meta = {"task_id": p["task_id"], "instance": inst.id, "family": inst.family, "b": 0}
+        for reader, s in (("receiver", 0), ("receiver", 1), ("naive", 0)):
+            rows.append({**meta, "s": s, "reader": reader, "conds": FP_CONDS,
+                         "messages": build_messages(p["text"], p[f"s{s}"], reader, inst, fmt=fmt)})
+    print(f"{len(rows)} clean-code rows from {len(tasks)} catchable problems (excluded from direction estimates)")
+    directions = compute_directions.remote(sorted(tasks))
+    outs = run_shard.starmap([(rows[k::shards], model, directions, f"fpcost_{k}") for k in range(shards)])
+    res = [r for o in outs for r in o]
+    with (DATA_DIR / "e1_fpcost.jsonl").open("w", encoding="utf-8") as f:
+        for r in res:
+            f.write(json.dumps(r) + "\n")
+    for reader, s in (("receiver", 0), ("receiver", 1), ("naive", 0)):
+        g = [r for r in res if r["reader"] == reader and r["s"] == s]
+        print(f"  {reader} clean S={s}: base mean susp {_mean([r['base'] for r in g]):.2f}; " +
+              "; ".join(f"{c} {_mean([r[c] for r in g]):.2f}" for c in FP_CONDS))
+
+
 def report(res: list[dict]) -> None:
     def cell(rows, cond):
         vals = [r[cond] for r in rows if cond in r]

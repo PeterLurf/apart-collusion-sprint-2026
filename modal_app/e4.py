@@ -121,7 +121,7 @@ def probe_scores(items: list[dict], shards: list[str]) -> dict:
     from safetensors import safe_open
 
     from rtd.carriers import FAMILIES, HARD_EVAL
-    from rtd.probes import fit_probe
+    from rtd.probes import drop_shared_inputs, fit_probe, input_ids
 
     paths = sorted(glob.glob("/vol/acts/full_*.safetensors"))
     meta = []
@@ -136,6 +136,7 @@ def probe_scores(items: list[dict], shards: list[str]) -> dict:
     y, groups = col("s"), col("task_id")
     base = (reader == "receiver") & (placement == "before")
     train_inst = base & ~np.isin(inst, list(HARD_EVAL))
+    code, unit = input_ids(meta)
     row_of = {(m["task_id"], m["instance"], m["b"], m["s"]): i for i, m in enumerate(meta)
               if m["reader"] == "receiver" and m["placement"] == "before"}
 
@@ -145,7 +146,7 @@ def probe_scores(items: list[dict], shards: list[str]) -> dict:
 
     out = {}
     for fam in FAMILIES:
-        tr = train_inst & (family != fam)
+        tr = drop_shared_inputs(train_inst & (family != fam), base & (family == fam), code, unit)
         probe = fit_probe(X[tr], y[tr], groups[tr])
         fam_items = [it for it in items if it["family"] == fam]
         raw = np.stack([X[row_of[(it["task_id"], it["instance"], it["b"], it["s"])]] for it in fam_items])
@@ -230,3 +231,23 @@ def main(n_problems: int = 300, gpu_shards: int = 4, chunk: int = 40, model: str
         for it in items:
             f.write(json.dumps({k: v for k, v in it.items() if k not in ("code", "redacted", "text")}) + "\n")
     print(f"wrote {out}")
+
+
+@app.local_entrypoint()
+def probes_only(n_problems: int = 300, gpu_shards: int = 4):
+    """Rescore the probe columns of an existing e4_items file (no API or GPU calls).
+
+    uv run modal run modal_app/e4.py::probes_only
+    """
+    out = DATA_DIR / ("e4_items.jsonl" if n_problems >= 300 else f"e4_items_n{n_problems}.jsonl")
+    with out.open(encoding="utf-8") as f:
+        items = [json.loads(line) for line in f]
+    names = [f"n{n_problems}_{k}" for k in range(gpu_shards)]
+    probes = probe_scores.remote([{k: it[k] for k in ("id", "task_id", "instance", "family", "b", "s")}
+                                  for it in items], names)
+    for it in items:
+        it.update(probes.get(it["id"], {}))
+    with out.open("w", encoding="utf-8") as f:
+        for it in items:
+            f.write(json.dumps(it) + "\n")
+    print(f"rescored probes -> {out}")

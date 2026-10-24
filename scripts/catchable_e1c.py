@@ -78,7 +78,7 @@ for label, key in (("steer d_S a=1 (L53)", "steer_S_a1"), ("steer d_S a=2", "ste
 
 print("\nSpecificity, naive S=1 (no key).")
 line("naive baseline", n1, "base")
-line("ablate d_S 45-55", n1, "ablate_S")
+line("naive: ablate d_S 45-55", n1, "ablate_S")  # own label: the receiver's line above keys the same report entry
 
 if patch:
     print(f"\nCarrier-token patching (token-aligned substitute pairs)")

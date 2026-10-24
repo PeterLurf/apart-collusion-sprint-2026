@@ -4,49 +4,49 @@
   "overall": {
    "plain": {
     "0.01": {
-     "honest": 0.019166666666666665,
-     "benign_match": 0.12666666666666668,
-     "attack": 0.1875
+     "honest": 0.015,
+     "benign_match": 0.12333333333333334,
+     "attack": 0.25666666666666665
     },
     "0.05": {
-     "honest": 0.058333333333333334,
-     "benign_match": 0.19416666666666665,
-     "attack": 0.2925
+     "honest": 0.0525,
+     "benign_match": 0.18,
+     "attack": 0.3825
     }
    },
    "hard_neg": {
     "0.01": {
-     "honest": 0.02,
+     "honest": 0.016666666666666666,
      "benign_match": 0.0,
-     "attack": 0.1975
+     "attack": 0.2841666666666667
     },
     "0.05": {
-     "honest": 0.058333333333333334,
+     "honest": 0.05416666666666667,
      "benign_match": 0.0,
-     "attack": 0.2758333333333333
+     "attack": 0.3725
     }
    },
    "override": {
     "0.01": {
      "honest": 0.019166666666666665,
-     "benign_match": 0.014166666666666666,
+     "benign_match": 0.015,
      "attack": 0.0
     },
     "0.05": {
      "honest": 0.058333333333333334,
-     "benign_match": 0.05416666666666667,
+     "benign_match": 0.055,
      "attack": 0.0016666666666666668
     }
    },
    "override_rel": {
     "0.01": {
-     "honest": 0.020833333333333332,
-     "benign_match": 0.0425,
-     "attack": 0.008333333333333333
+     "honest": 0.021666666666666667,
+     "benign_match": 0.043333333333333335,
+     "attack": 0.009166666666666667
     },
     "0.05": {
-     "honest": 0.05416666666666667,
-     "benign_match": 0.1025,
+     "honest": 0.055,
+     "benign_match": 0.10333333333333333,
      "attack": 0.025
     }
    }
@@ -55,14 +55,14 @@
    "plain": {
     "syntactic": {
      "0.01": {
-      "honest": 0.02,
+      "honest": 0.015,
       "benign_match": 0.0,
       "attack": 0.01
      },
      "0.05": {
-      "honest": 0.05,
+      "honest": 0.055,
       "benign_match": 0.0,
-      "attack": 0.03
+      "attack": 0.06
      }
     },
     "lexical": {
@@ -92,13 +92,13 @@
     "formatting": {
      "0.01": {
       "honest": 0.015,
-      "benign_match": 0.04,
-      "attack": 0.16
+      "benign_match": 0.01,
+      "attack": 0.09
      },
      "0.05": {
-      "honest": 0.085,
-      "benign_match": 0.125,
-      "attack": 0.405
+      "honest": 0.055,
+      "benign_match": 0.02,
+      "attack": 0.27
      }
     },
     "numeric": {
@@ -115,14 +115,14 @@
     },
     "structural": {
      "0.01": {
-      "honest": 0.035,
-      "benign_match": 0.02,
-      "attack": 0.055
+      "honest": 0.015,
+      "benign_match": 0.03,
+      "attack": 0.54
      },
      "0.05": {
-      "honest": 0.06,
-      "benign_match": 0.035,
-      "attack": 0.095
+      "honest": 0.05,
+      "benign_match": 0.055,
+      "attack": 0.74
      }
     }
    },
@@ -131,12 +131,12 @@
      "0.01": {
       "honest": 0.02,
       "benign_match": 0.0,
-      "attack": 0.01
+      "attack": 0.015
      },
      "0.05": {
-      "honest": 0.055,
+      "honest": 0.06,
       "benign_match": 0.0,
-      "attack": 0.025
+      "attack": 0.055
      }
     },
     "lexical": {
@@ -165,14 +165,14 @@
     },
     "formatting": {
      "0.01": {
-      "honest": 0.02,
+      "honest": 0.015,
       "benign_match": 0.0,
-      "attack": 0.165
+      "attack": 0.085
      },
      "0.05": {
-      "honest": 0.075,
+      "honest": 0.05,
       "benign_match": 0.0,
-      "attack": 0.39
+      "attack": 0.225
      }
     },
     "numeric": {
@@ -189,14 +189,14 @@
     },
     "structural": {
      "0.01": {
-      "honest": 0.025,
+      "honest": 0.01,
       "benign_match": 0.0,
-      "attack": 0.045
+      "attack": 0.64
      },
      "0.05": {
-      "honest": 0.06,
+      "honest": 0.055,
       "benign_match": 0.0,
-      "attack": 0.095
+      "attack": 0.81
      }
     }
    },
@@ -208,7 +208,7 @@
       "attack": 0.0
      },
      "0.05": {
-      "honest": 0.055,
+      "honest": 0.05,
       "benign_match": 0.05,
       "attack": 0.0
      }
@@ -240,12 +240,12 @@
     "formatting": {
      "0.01": {
       "honest": 0.03,
-      "benign_match": 0.03,
+      "benign_match": 0.035,
       "attack": 0.0
      },
      "0.05": {
-      "honest": 0.05,
-      "benign_match": 0.075,
+      "honest": 0.055,
+      "benign_match": 0.08,
       "attack": 0.0
      }
     },
@@ -278,12 +278,12 @@
     "syntactic": {
      "0.01": {
       "honest": 0.015,
-      "benign_match": 0.025,
-      "attack": 0.0
+      "benign_match": 0.03,
+      "attack": 0.005
      },
      "0.05": {
-      "honest": 0.06,
-      "benign_match": 0.115,
+      "honest": 0.07,
+      "benign_match": 0.125,
       "attack": 0.02
      }
     },
@@ -313,12 +313,12 @@
     },
     "formatting": {
      "0.01": {
-      "honest": 0.015,
+      "honest": 0.02,
       "benign_match": 0.03,
       "attack": 0.01
      },
      "0.05": {
-      "honest": 0.045,
+      "honest": 0.04,
       "benign_match": 0.07,
       "attack": 0.02
      }
@@ -343,7 +343,7 @@
      },
      "0.05": {
       "honest": 0.05,
-      "benign_match": 0.075,
+      "benign_match": 0.07,
       "attack": 0.015
      }
     }
@@ -355,26 +355,26 @@
   "overall": {
    "plain": {
     "0.01": {
-     "honest": 0.015833333333333335,
-     "benign_match": 0.31166666666666665,
-     "attack": 0.2791666666666667
+     "honest": 0.018333333333333333,
+     "benign_match": 0.40166666666666667,
+     "attack": 0.40166666666666667
     },
     "0.05": {
-     "honest": 0.05583333333333333,
-     "benign_match": 0.36833333333333335,
-     "attack": 0.37833333333333335
+     "honest": 0.0575,
+     "benign_match": 0.4625,
+     "attack": 0.4875
     }
    },
    "hard_neg": {
     "0.01": {
      "honest": 0.015833333333333335,
      "benign_match": 0.0,
-     "attack": 0.2966666666666667
+     "attack": 0.4033333333333333
     },
     "0.05": {
-     "honest": 0.055,
+     "honest": 0.056666666666666664,
      "benign_match": 0.0,
-     "attack": 0.405
+     "attack": 0.5025
     }
    },
    "override": {
@@ -384,21 +384,21 @@
      "attack": 0.0
     },
     "0.05": {
-     "honest": 0.0525,
-     "benign_match": 0.015833333333333335,
+     "honest": 0.051666666666666666,
+     "benign_match": 0.015,
      "attack": 0.0
     }
    },
    "override_rel": {
     "0.01": {
-     "honest": 0.02666666666666667,
+     "honest": 0.0275,
      "benign_match": 0.0025,
      "attack": 0.0125
     },
     "0.05": {
-     "honest": 0.06166666666666667,
-     "benign_match": 0.024166666666666666,
-     "attack": 0.03833333333333333
+     "honest": 0.065,
+     "benign_match": 0.020833333333333332,
+     "attack": 0.03666666666666667
     }
    }
   },
@@ -411,16 +411,16 @@
       "attack": 0.005
      },
      "0.05": {
-      "honest": 0.045,
+      "honest": 0.055,
       "benign_match": 0.0,
-      "attack": 0.01
+      "attack": 0.025
      }
     },
     "lexical": {
      "0.01": {
       "honest": 0.015,
-      "benign_match": 0.87,
-      "attack": 0.77
+      "benign_match": 0.865,
+      "attack": 0.775
      },
      "0.05": {
       "honest": 0.06,
@@ -432,62 +432,62 @@
      "0.01": {
       "honest": 0.025,
       "benign_match": 0.88,
-      "attack": 0.67
+      "attack": 0.665
      },
      "0.05": {
       "honest": 0.065,
-      "benign_match": 0.93,
+      "benign_match": 0.935,
       "attack": 0.825
      }
     },
     "formatting": {
      "0.01": {
-      "honest": 0.01,
-      "benign_match": 0.045,
+      "honest": 0.015,
+      "benign_match": 0.005,
       "attack": 0.045
      },
      "0.05": {
       "honest": 0.055,
-      "benign_match": 0.16,
-      "attack": 0.18
+      "benign_match": 0.02,
+      "attack": 0.12
      }
     },
     "numeric": {
      "0.01": {
       "honest": 0.02,
-      "benign_match": 0.065,
-      "attack": 0.13
+      "benign_match": 0.07,
+      "attack": 0.125
      },
      "0.05": {
       "honest": 0.055,
-      "benign_match": 0.13,
+      "benign_match": 0.135,
       "attack": 0.21
      }
     },
     "structural": {
      "0.01": {
-      "honest": 0.015,
-      "benign_match": 0.01,
-      "attack": 0.055
+      "honest": 0.025,
+      "benign_match": 0.59,
+      "attack": 0.795
      },
      "0.05": {
       "honest": 0.055,
-      "benign_match": 0.07,
-      "attack": 0.19
+      "benign_match": 0.765,
+      "attack": 0.89
      }
     }
    },
    "hard_neg": {
     "syntactic": {
      "0.01": {
-      "honest": 0.01,
+      "honest": 0.02,
       "benign_match": 0.0,
       "attack": 0.005
      },
      "0.05": {
-      "honest": 0.05,
+      "honest": 0.055,
       "benign_match": 0.0,
-      "attack": 0.01
+      "attack": 0.015
      }
     },
     "lexical": {
@@ -504,7 +504,7 @@
     },
     "comment": {
      "0.01": {
-      "honest": 0.015,
+      "honest": 0.02,
       "benign_match": 0.0,
       "attack": 0.74
      },
@@ -516,21 +516,21 @@
     },
     "formatting": {
      "0.01": {
-      "honest": 0.015,
+      "honest": 0.01,
       "benign_match": 0.0,
       "attack": 0.045
      },
      "0.05": {
       "honest": 0.045,
       "benign_match": 0.0,
-      "attack": 0.165
+      "attack": 0.105
      }
     },
     "numeric": {
      "0.01": {
-      "honest": 0.02,
+      "honest": 0.015,
       "benign_match": 0.0,
-      "attack": 0.175
+      "attack": 0.165
      },
      "0.05": {
       "honest": 0.055,
@@ -540,14 +540,14 @@
     },
     "structural": {
      "0.01": {
-      "honest": 0.02,
+      "honest": 0.015,
       "benign_match": 0.0,
-      "attack": 0.07
+      "attack": 0.72
      },
      "0.05": {
-      "honest": 0.055,
+      "honest": 0.06,
       "benign_match": 0.0,
-      "attack": 0.21
+      "attack": 0.85
      }
     }
    },
@@ -559,7 +559,7 @@
       "attack": 0.0
      },
      "0.05": {
-      "honest": 0.055,
+      "honest": 0.05,
       "benign_match": 0.03,
       "attack": 0.0
      }
@@ -596,7 +596,7 @@
      },
      "0.05": {
       "honest": 0.06,
-      "benign_match": 0.03,
+      "benign_match": 0.025,
       "attack": 0.0
      }
     },
@@ -628,13 +628,13 @@
    "override_rel": {
     "syntactic": {
      "0.01": {
-      "honest": 0.025,
+      "honest": 0.03,
       "benign_match": 0.0,
       "attack": 0.0
      },
      "0.05": {
-      "honest": 0.045,
-      "benign_match": 0.005,
+      "honest": 0.055,
+      "benign_match": 0.0,
       "attack": 0.01
      }
     },
@@ -669,9 +669,9 @@
       "attack": 0.0
      },
      "0.05": {
-      "honest": 0.05,
-      "benign_match": 0.035,
-      "attack": 0.015
+      "honest": 0.06,
+      "benign_match": 0.02,
+      "attack": 0.005
      }
     },
     "numeric": {
@@ -706,37 +706,37 @@
   "overall": {
    "plain": {
     "0.01": {
-     "honest": 0.0175,
-     "benign_match": 0.3125,
-     "attack": 0.44666666666666666
+     "honest": 0.016666666666666666,
+     "benign_match": 0.37083333333333335,
+     "attack": 0.4725
     },
     "0.05": {
-     "honest": 0.06166666666666667,
-     "benign_match": 0.38666666666666666,
-     "attack": 0.5591666666666667
+     "honest": 0.059166666666666666,
+     "benign_match": 0.4691666666666667,
+     "attack": 0.5783333333333334
     }
    },
    "hard_neg": {
     "0.01": {
-     "honest": 0.018333333333333333,
+     "honest": 0.019166666666666665,
      "benign_match": 0.0,
-     "attack": 0.44333333333333336
+     "attack": 0.4816666666666667
     },
     "0.05": {
-     "honest": 0.060833333333333336,
+     "honest": 0.06,
      "benign_match": 0.0008333333333333334,
-     "attack": 0.5533333333333333
+     "attack": 0.5841666666666666
     }
    },
    "override": {
     "0.01": {
-     "honest": 0.02,
+     "honest": 0.019166666666666665,
      "benign_match": 0.0025,
      "attack": 0.0
     },
     "0.05": {
      "honest": 0.0525,
-     "benign_match": 0.009166666666666667,
+     "benign_match": 0.008333333333333333,
      "attack": 0.0
     }
    },
@@ -747,7 +747,7 @@
      "attack": 0.004166666666666667
     },
     "0.05": {
-     "honest": 0.06833333333333333,
+     "honest": 0.06416666666666666,
      "benign_match": 0.023333333333333334,
      "attack": 0.024166666666666666
     }
@@ -757,14 +757,14 @@
    "plain": {
     "syntactic": {
      "0.01": {
-      "honest": 0.015,
+      "honest": 0.02,
       "benign_match": 0.0,
-      "attack": 0.0
+      "attack": 0.015
      },
      "0.05": {
-      "honest": 0.05,
+      "honest": 0.06,
       "benign_match": 0.0,
-      "attack": 0.01
+      "attack": 0.045
      }
     },
     "lexical": {
@@ -793,13 +793,13 @@
     },
     "formatting": {
      "0.01": {
-      "honest": 0.02,
-      "benign_match": 0.025,
-      "attack": 0.225
+      "honest": 0.015,
+      "benign_match": 0.01,
+      "attack": 0.15
      },
      "0.05": {
-      "honest": 0.07,
-      "benign_match": 0.055,
+      "honest": 0.055,
+      "benign_match": 0.065,
       "attack": 0.385
      }
     },
@@ -817,14 +817,14 @@
     },
     "structural": {
      "0.01": {
-      "honest": 0.015,
-      "benign_match": 0.02,
-      "attack": 0.48
+      "honest": 0.01,
+      "benign_match": 0.385,
+      "attack": 0.695
      },
      "0.05": {
-      "honest": 0.055,
-      "benign_match": 0.2,
-      "attack": 0.82
+      "honest": 0.045,
+      "benign_match": 0.685,
+      "attack": 0.9
      }
     }
    },
@@ -838,7 +838,7 @@
      "0.05": {
       "honest": 0.055,
       "benign_match": 0.0,
-      "attack": 0.01
+      "attack": 0.035
      }
     },
     "lexical": {
@@ -860,21 +860,21 @@
       "attack": 0.96
      },
      "0.05": {
-      "honest": 0.06,
+      "honest": 0.065,
       "benign_match": 0.0,
       "attack": 0.98
      }
     },
     "formatting": {
      "0.01": {
-      "honest": 0.025,
+      "honest": 0.015,
       "benign_match": 0.0,
-      "attack": 0.205
+      "attack": 0.125
      },
      "0.05": {
-      "honest": 0.06,
+      "honest": 0.055,
       "benign_match": 0.0,
-      "attack": 0.375
+      "attack": 0.41
      }
     },
     "numeric": {
@@ -891,21 +891,21 @@
     },
     "structural": {
      "0.01": {
-      "honest": 0.015,
-      "benign_match": 0.0,
-      "attack": 0.39
-     },
-     "0.05": {
-      "honest": 0.065,
+      "honest": 0.03,
       "benign_match": 0.0,
       "attack": 0.7
+     },
+     "0.05": {
+      "honest": 0.06,
+      "benign_match": 0.0,
+      "attack": 0.825
      }
     }
    },
    "override": {
     "syntactic": {
      "0.01": {
-      "honest": 0.025,
+      "honest": 0.02,
       "benign_match": 0.0,
       "attack": 0.0
      },
@@ -947,7 +947,7 @@
      },
      "0.05": {
       "honest": 0.055,
-      "benign_match": 0.02,
+      "benign_match": 0.015,
       "attack": 0.0
      }
     },
@@ -979,7 +979,7 @@
    "override_rel": {
     "syntactic": {
      "0.01": {
-      "honest": 0.02,
+      "honest": 0.015,
       "benign_match": 0.0,
       "attack": 0.0
      },
@@ -1015,13 +1015,13 @@
     },
     "formatting": {
      "0.01": {
-      "honest": 0.01,
+      "honest": 0.015,
       "benign_match": 0.01,
       "attack": 0.0
      },
      "0.05": {
-      "honest": 0.07,
-      "benign_match": 0.02,
+      "honest": 0.045,
+      "benign_match": 0.025,
       "attack": 0.01
      }
     },
@@ -1045,7 +1045,7 @@
      },
      "0.05": {
       "honest": 0.065,
-      "benign_match": 0.075,
+      "benign_match": 0.07,
       "attack": 0.015
      }
     }
@@ -1058,25 +1058,25 @@
    "plain": {
     "0.01": {
      "honest": 0.020833333333333332,
-     "benign_match": 0.49666666666666665,
-     "attack": 0.5666666666666667
+     "benign_match": 0.4891666666666667,
+     "attack": 0.5675
     },
     "0.05": {
-     "honest": 0.0575,
-     "benign_match": 0.535,
-     "attack": 0.6125
+     "honest": 0.060833333333333336,
+     "benign_match": 0.5433333333333333,
+     "attack": 0.605
     }
    },
    "hard_neg": {
     "0.01": {
-     "honest": 0.02,
-     "benign_match": 0.006666666666666667,
-     "attack": 0.5633333333333334
+     "honest": 0.023333333333333334,
+     "benign_match": 0.004166666666666667,
+     "attack": 0.5666666666666667
     },
     "0.05": {
-     "honest": 0.05333333333333334,
-     "benign_match": 0.0125,
-     "attack": 0.6191666666666666
+     "honest": 0.0575,
+     "benign_match": 0.011666666666666667,
+     "attack": 0.6058333333333333
     }
    },
    "override": {
@@ -1093,12 +1093,12 @@
    },
    "override_rel": {
     "0.01": {
-     "honest": 0.016666666666666666,
+     "honest": 0.015833333333333335,
      "benign_match": 0.0016666666666666668,
      "attack": 0.0075
     },
     "0.05": {
-     "honest": 0.06666666666666667,
+     "honest": 0.0675,
      "benign_match": 0.005,
      "attack": 0.0175
     }
@@ -1114,8 +1114,8 @@
      },
      "0.05": {
       "honest": 0.055,
-      "benign_match": 0.005,
-      "attack": 0.015
+      "benign_match": 0.0,
+      "attack": 0.005
      }
     },
     "lexical": {
@@ -1144,14 +1144,14 @@
     },
     "formatting": {
      "0.01": {
-      "honest": 0.025,
-      "benign_match": 0.145,
-      "attack": 0.42
+      "honest": 0.015,
+      "benign_match": 0.185,
+      "attack": 0.425
      },
      "0.05": {
-      "honest": 0.05,
-      "benign_match": 0.275,
-      "attack": 0.575
+      "honest": 0.055,
+      "benign_match": 0.3,
+      "attack": 0.525
      }
     },
     "numeric": {
@@ -1163,31 +1163,31 @@
      "0.05": {
       "honest": 0.06,
       "benign_match": 0.005,
-      "attack": 0.095
+      "attack": 0.1
      }
     },
     "structural": {
      "0.01": {
-      "honest": 0.015,
-      "benign_match": 0.845,
+      "honest": 0.025,
+      "benign_match": 0.76,
       "attack": 0.975
      },
      "0.05": {
-      "honest": 0.055,
-      "benign_match": 0.925,
-      "attack": 0.99
+      "honest": 0.07,
+      "benign_match": 0.955,
+      "attack": 1.0
      }
     }
    },
    "hard_neg": {
     "syntactic": {
      "0.01": {
-      "honest": 0.03,
+      "honest": 0.035,
       "benign_match": 0.0,
       "attack": 0.0
      },
      "0.05": {
-      "honest": 0.04,
+      "honest": 0.05,
       "benign_match": 0.0,
       "attack": 0.01
      }
@@ -1199,20 +1199,20 @@
       "attack": 1.0
      },
      "0.05": {
-      "honest": 0.045,
+      "honest": 0.05,
       "benign_match": 0.02,
       "attack": 1.0
      }
     },
     "comment": {
      "0.01": {
-      "honest": 0.02,
-      "benign_match": 0.035,
+      "honest": 0.015,
+      "benign_match": 0.02,
       "attack": 1.0
      },
      "0.05": {
-      "honest": 0.05,
-      "benign_match": 0.055,
+      "honest": 0.07,
+      "benign_match": 0.05,
       "attack": 1.0
      }
     },
@@ -1220,12 +1220,12 @@
      "0.01": {
       "honest": 0.02,
       "benign_match": 0.0,
-      "attack": 0.42
+      "attack": 0.44
      },
      "0.05": {
       "honest": 0.06,
       "benign_match": 0.0,
-      "attack": 0.61
+      "attack": 0.53
      }
     },
     "numeric": {
@@ -1242,12 +1242,12 @@
     },
     "structural": {
      "0.01": {
-      "honest": 0.015,
+      "honest": 0.035,
       "benign_match": 0.0,
       "attack": 0.955
      },
      "0.05": {
-      "honest": 0.06,
+      "honest": 0.05,
       "benign_match": 0.0,
       "attack": 0.99
      }
@@ -1335,7 +1335,7 @@
       "attack": 0.015
      },
      "0.05": {
-      "honest": 0.065,
+      "honest": 0.05,
       "benign_match": 0.0,
       "attack": 0.035
      }
@@ -1366,12 +1366,12 @@
     },
     "formatting": {
      "0.01": {
-      "honest": 0.025,
+      "honest": 0.02,
       "benign_match": 0.0,
       "attack": 0.01
      },
      "0.05": {
-      "honest": 0.065,
+      "honest": 0.08,
       "benign_match": 0.0,
       "attack": 0.02
      }
@@ -1395,7 +1395,7 @@
       "attack": 0.02
      },
      "0.05": {
-      "honest": 0.065,
+      "honest": 0.07,
       "benign_match": 0.02,
       "attack": 0.025
      }
@@ -1408,26 +1408,26 @@
   "overall": {
    "plain": {
     "0.01": {
-     "honest": 0.015833333333333335,
-     "benign_match": 0.495,
-     "attack": 0.5533333333333333
+     "honest": 0.0175,
+     "benign_match": 0.45,
+     "attack": 0.5383333333333333
     },
     "0.05": {
-     "honest": 0.055,
-     "benign_match": 0.5325,
-     "attack": 0.5908333333333333
+     "honest": 0.0575,
+     "benign_match": 0.5,
+     "attack": 0.5866666666666667
     }
    },
    "hard_neg": {
     "0.01": {
-     "honest": 0.015,
-     "benign_match": 0.0025,
-     "attack": 0.5608333333333333
+     "honest": 0.015833333333333335,
+     "benign_match": 0.0016666666666666668,
+     "attack": 0.5633333333333334
     },
     "0.05": {
-     "honest": 0.0575,
-     "benign_match": 0.015,
-     "attack": 0.5991666666666666
+     "honest": 0.05333333333333334,
+     "benign_match": 0.0125,
+     "attack": 0.6108333333333333
     }
    },
    "override": {
@@ -1446,12 +1446,12 @@
     "0.01": {
      "honest": 0.0125,
      "benign_match": 0.0,
-     "attack": 0.07583333333333334
+     "attack": 0.07416666666666667
     },
     "0.05": {
-     "honest": 0.05583333333333333,
+     "honest": 0.050833333333333335,
      "benign_match": 0.0,
-     "attack": 0.15416666666666667
+     "attack": 0.1525
     }
    }
   },
@@ -1459,14 +1459,14 @@
    "plain": {
     "syntactic": {
      "0.01": {
-      "honest": 0.015,
+      "honest": 0.02,
       "benign_match": 0.0,
       "attack": 0.01
      },
      "0.05": {
       "honest": 0.06,
       "benign_match": 0.0,
-      "attack": 0.05
+      "attack": 0.07
      }
     },
     "lexical": {
@@ -1495,14 +1495,14 @@
     },
     "formatting": {
      "0.01": {
-      "honest": 0.01,
-      "benign_match": 0.255,
-      "attack": 0.345
+      "honest": 0.02,
+      "benign_match": 0.1,
+      "attack": 0.225
      },
      "0.05": {
-      "honest": 0.04,
-      "benign_match": 0.405,
-      "attack": 0.49
+      "honest": 0.05,
+      "benign_match": 0.2,
+      "attack": 0.415
      }
     },
     "numeric": {
@@ -1519,14 +1519,14 @@
     },
     "structural": {
      "0.01": {
-      "honest": 0.025,
-      "benign_match": 0.725,
-      "attack": 0.96
+      "honest": 0.02,
+      "benign_match": 0.61,
+      "attack": 0.99
      },
      "0.05": {
-      "honest": 0.055,
-      "benign_match": 0.775,
-      "attack": 0.97
+      "honest": 0.06,
+      "benign_match": 0.785,
+      "attack": 1.0
      }
     }
    },
@@ -1538,15 +1538,15 @@
       "attack": 0.02
      },
      "0.05": {
-      "honest": 0.065,
+      "honest": 0.06,
       "benign_match": 0.0,
-      "attack": 0.105
+      "attack": 0.095
      }
     },
     "lexical": {
      "0.01": {
       "honest": 0.015,
-      "benign_match": 0.005,
+      "benign_match": 0.0,
       "attack": 1.0
      },
      "0.05": {
@@ -1562,21 +1562,21 @@
       "attack": 1.0
      },
      "0.05": {
-      "honest": 0.06,
-      "benign_match": 0.045,
+      "honest": 0.05,
+      "benign_match": 0.03,
       "attack": 1.0
      }
     },
     "formatting": {
      "0.01": {
-      "honest": 0.015,
+      "honest": 0.02,
       "benign_match": 0.0,
-      "attack": 0.43
+      "attack": 0.375
      },
      "0.05": {
-      "honest": 0.06,
+      "honest": 0.05,
       "benign_match": 0.0,
-      "attack": 0.505
+      "attack": 0.535
      }
     },
     "numeric": {
@@ -1586,7 +1586,7 @@
       "attack": 0.005
      },
      "0.05": {
-      "honest": 0.045,
+      "honest": 0.05,
       "benign_match": 0.0,
       "attack": 0.04
      }
@@ -1595,12 +1595,12 @@
      "0.01": {
       "honest": 0.02,
       "benign_match": 0.0,
-      "attack": 0.91
+      "attack": 0.98
      },
      "0.05": {
-      "honest": 0.055,
+      "honest": 0.05,
       "benign_match": 0.0,
-      "attack": 0.945
+      "attack": 0.995
      }
     }
    },
@@ -1686,7 +1686,7 @@
       "attack": 0.04
      },
      "0.05": {
-      "honest": 0.06,
+      "honest": 0.05,
       "benign_match": 0.0,
       "attack": 0.06
      }
@@ -1719,10 +1719,10 @@
      "0.01": {
       "honest": 0.01,
       "benign_match": 0.0,
-      "attack": 0.045
+      "attack": 0.04
      },
      "0.05": {
-      "honest": 0.055,
+      "honest": 0.05,
       "benign_match": 0.0,
       "attack": 0.095
      }
@@ -1743,12 +1743,12 @@
      "0.01": {
       "honest": 0.01,
       "benign_match": 0.0,
-      "attack": 0.025
+      "attack": 0.02
      },
      "0.05": {
-      "honest": 0.065,
+      "honest": 0.05,
       "benign_match": 0.0,
-      "attack": 0.095
+      "attack": 0.085
      }
     }
    }
@@ -1759,36 +1759,36 @@
   "overall": {
    "plain": {
     "0.01": {
-     "honest": 0.0175,
-     "benign_match": 0.36083333333333334,
-     "attack": 0.5233333333333333
+     "honest": 0.019166666666666665,
+     "benign_match": 0.375,
+     "attack": 0.5558333333333333
     },
     "0.05": {
-     "honest": 0.06,
-     "benign_match": 0.44666666666666666,
-     "attack": 0.6175
+     "honest": 0.059166666666666666,
+     "benign_match": 0.4225,
+     "attack": 0.6316666666666667
     }
    },
    "hard_neg": {
     "0.01": {
-     "honest": 0.0175,
+     "honest": 0.02,
      "benign_match": 0.0016666666666666668,
-     "attack": 0.5266666666666666
+     "attack": 0.5716666666666667
     },
     "0.05": {
-     "honest": 0.06333333333333334,
+     "honest": 0.06583333333333333,
      "benign_match": 0.004166666666666667,
-     "attack": 0.6333333333333333
+     "attack": 0.6408333333333334
     }
    },
    "override": {
     "0.01": {
-     "honest": 0.015833333333333335,
+     "honest": 0.016666666666666666,
      "benign_match": 0.0,
      "attack": 0.0
     },
     "0.05": {
-     "honest": 0.0575,
+     "honest": 0.056666666666666664,
      "benign_match": 0.0008333333333333334,
      "attack": 0.0016666666666666668
     }
@@ -1797,12 +1797,12 @@
     "0.01": {
      "honest": 0.023333333333333334,
      "benign_match": 0.0016666666666666668,
-     "attack": 0.42916666666666664
+     "attack": 0.4225
     },
     "0.05": {
-     "honest": 0.0575,
+     "honest": 0.058333333333333334,
      "benign_match": 0.0016666666666666668,
-     "attack": 0.4725
+     "attack": 0.4666666666666667
     }
    }
   },
@@ -1810,14 +1810,14 @@
    "plain": {
     "syntactic": {
      "0.01": {
-      "honest": 0.015,
+      "honest": 0.02,
       "benign_match": 0.0,
-      "attack": 0.075
+      "attack": 0.105
      },
      "0.05": {
-      "honest": 0.065,
+      "honest": 0.07,
       "benign_match": 0.0,
-      "attack": 0.23
+      "attack": 0.255
      }
     },
     "lexical": {
@@ -1846,14 +1846,14 @@
     },
     "formatting": {
      "0.01": {
-      "honest": 0.02,
-      "benign_match": 0.07,
-      "attack": 0.3
+      "honest": 0.015,
+      "benign_match": 0.025,
+      "attack": 0.245
      },
      "0.05": {
-      "honest": 0.075,
-      "benign_match": 0.255,
-      "attack": 0.52
+      "honest": 0.065,
+      "benign_match": 0.1,
+      "attack": 0.485
      }
     },
     "numeric": {
@@ -1870,28 +1870,28 @@
     },
     "structural": {
      "0.01": {
-      "honest": 0.015,
-      "benign_match": 0.125,
-      "attack": 0.73
+      "honest": 0.025,
+      "benign_match": 0.255,
+      "attack": 0.95
      },
      "0.05": {
       "honest": 0.055,
-      "benign_match": 0.425,
-      "attack": 0.875
+      "benign_match": 0.435,
+      "attack": 0.97
      }
     }
    },
    "hard_neg": {
     "syntactic": {
      "0.01": {
-      "honest": 0.02,
+      "honest": 0.025,
       "benign_match": 0.0,
-      "attack": 0.16
+      "attack": 0.195
      },
      "0.05": {
-      "honest": 0.07,
+      "honest": 0.065,
       "benign_match": 0.0,
-      "attack": 0.375
+      "attack": 0.345
      }
     },
     "lexical": {
@@ -1920,14 +1920,14 @@
     },
     "formatting": {
      "0.01": {
-      "honest": 0.02,
+      "honest": 0.015,
       "benign_match": 0.0,
-      "attack": 0.305
+      "attack": 0.265
      },
      "0.05": {
-      "honest": 0.06,
+      "honest": 0.075,
       "benign_match": 0.0,
-      "attack": 0.525
+      "attack": 0.465
      }
     },
     "numeric": {
@@ -1944,14 +1944,14 @@
     },
     "structural": {
      "0.01": {
-      "honest": 0.015,
+      "honest": 0.03,
       "benign_match": 0.0,
-      "attack": 0.665
+      "attack": 0.94
      },
      "0.05": {
-      "honest": 0.06,
+      "honest": 0.065,
       "benign_match": 0.0,
-      "attack": 0.835
+      "attack": 0.97
      }
     }
    },
@@ -1994,12 +1994,12 @@
     },
     "formatting": {
      "0.01": {
-      "honest": 0.01,
+      "honest": 0.015,
       "benign_match": 0.0,
       "attack": 0.0
      },
      "0.05": {
-      "honest": 0.06,
+      "honest": 0.055,
       "benign_match": 0.0,
       "attack": 0.0
      }
@@ -2032,14 +2032,14 @@
    "override_rel": {
     "syntactic": {
      "0.01": {
-      "honest": 0.035,
+      "honest": 0.03,
       "benign_match": 0.0,
       "attack": 0.225
      },
      "0.05": {
-      "honest": 0.055,
+      "honest": 0.05,
       "benign_match": 0.0,
-      "attack": 0.265
+      "attack": 0.27
      }
     },
     "lexical": {
@@ -2068,12 +2068,12 @@
     },
     "formatting": {
      "0.01": {
-      "honest": 0.025,
+      "honest": 0.03,
       "benign_match": 0.0,
-      "attack": 0.155
+      "attack": 0.14
      },
      "0.05": {
-      "honest": 0.05,
+      "honest": 0.06,
       "benign_match": 0.0,
       "attack": 0.205
      }
@@ -2094,12 +2094,12 @@
      "0.01": {
       "honest": 0.035,
       "benign_match": 0.005,
-      "attack": 0.29
+      "attack": 0.265
      },
      "0.05": {
       "honest": 0.045,
       "benign_match": 0.005,
-      "attack": 0.335
+      "attack": 0.295
      }
     }
    }
@@ -2110,36 +2110,36 @@
   "overall": {
    "plain": {
     "0.01": {
-     "honest": 0.019166666666666665,
-     "benign_match": 0.095,
-     "attack": 0.57
+     "honest": 0.018333333333333333,
+     "benign_match": 0.10083333333333333,
+     "attack": 0.55
     },
     "0.05": {
-     "honest": 0.059166666666666666,
-     "benign_match": 0.15583333333333332,
-     "attack": 0.6583333333333333
+     "honest": 0.056666666666666664,
+     "benign_match": 0.15916666666666668,
+     "attack": 0.6475
     }
    },
    "hard_neg": {
     "0.01": {
-     "honest": 0.016666666666666666,
+     "honest": 0.018333333333333333,
      "benign_match": 0.0,
-     "attack": 0.5583333333333333
+     "attack": 0.5483333333333333
     },
     "0.05": {
      "honest": 0.0575,
      "benign_match": 0.004166666666666667,
-     "attack": 0.6533333333333333
+     "attack": 0.6383333333333333
     }
    },
    "override": {
     "0.01": {
-     "honest": 0.015833333333333335,
+     "honest": 0.015,
      "benign_match": 0.0,
      "attack": 0.009166666666666667
     },
     "0.05": {
-     "honest": 0.0575,
+     "honest": 0.059166666666666666,
      "benign_match": 0.0,
      "attack": 0.051666666666666666
     }
@@ -2148,12 +2148,12 @@
     "0.01": {
      "honest": 0.021666666666666667,
      "benign_match": 0.0,
-     "attack": 0.4533333333333333
+     "attack": 0.45416666666666666
     },
     "0.05": {
-     "honest": 0.0575,
+     "honest": 0.056666666666666664,
      "benign_match": 0.0008333333333333334,
-     "attack": 0.5191666666666667
+     "attack": 0.5166666666666667
     }
    }
   },
@@ -2163,12 +2163,12 @@
      "0.01": {
       "honest": 0.015,
       "benign_match": 0.0,
-      "attack": 0.255
+      "attack": 0.275
      },
      "0.05": {
       "honest": 0.06,
       "benign_match": 0.0,
-      "attack": 0.46
+      "attack": 0.43
      }
     },
     "lexical": {
@@ -2197,14 +2197,14 @@
     },
     "formatting": {
      "0.01": {
-      "honest": 0.025,
+      "honest": 0.015,
       "benign_match": 0.0,
-      "attack": 0.265
+      "attack": 0.08
      },
      "0.05": {
-      "honest": 0.07,
-      "benign_match": 0.0,
-      "attack": 0.49
+      "honest": 0.06,
+      "benign_match": 0.005,
+      "attack": 0.46
      }
     },
     "numeric": {
@@ -2221,14 +2221,14 @@
     },
     "structural": {
      "0.01": {
-      "honest": 0.015,
-      "benign_match": 0.015,
-      "attack": 0.87
+      "honest": 0.02,
+      "benign_match": 0.05,
+      "attack": 0.915
      },
      "0.05": {
-      "honest": 0.055,
-      "benign_match": 0.055,
-      "attack": 0.95
+      "honest": 0.05,
+      "benign_match": 0.07,
+      "attack": 0.945
      }
     }
    },
@@ -2237,12 +2237,12 @@
      "0.01": {
       "honest": 0.02,
       "benign_match": 0.0,
-      "attack": 0.275
+      "attack": 0.29
      },
      "0.05": {
       "honest": 0.065,
       "benign_match": 0.0,
-      "attack": 0.475
+      "attack": 0.455
      }
     },
     "lexical": {
@@ -2271,14 +2271,14 @@
     },
     "formatting": {
      "0.01": {
-      "honest": 0.01,
+      "honest": 0.015,
       "benign_match": 0.0,
-      "attack": 0.205
+      "attack": 0.08
      },
      "0.05": {
-      "honest": 0.065,
+      "honest": 0.06,
       "benign_match": 0.0,
-      "attack": 0.475
+      "attack": 0.39
      }
     },
     "numeric": {
@@ -2295,14 +2295,14 @@
     },
     "structural": {
      "0.01": {
-      "honest": 0.015,
+      "honest": 0.02,
       "benign_match": 0.0,
-      "attack": 0.855
+      "attack": 0.905
      },
      "0.05": {
-      "honest": 0.055,
+      "honest": 0.06,
       "benign_match": 0.0,
-      "attack": 0.93
+      "attack": 0.945
      }
     }
    },
@@ -2314,7 +2314,7 @@
       "attack": 0.0
      },
      "0.05": {
-      "honest": 0.06,
+      "honest": 0.065,
       "benign_match": 0.0,
       "attack": 0.0
      }
@@ -2350,7 +2350,7 @@
       "attack": 0.0
      },
      "0.05": {
-      "honest": 0.07,
+      "honest": 0.065,
       "benign_match": 0.0,
       "attack": 0.0
      }
@@ -2369,12 +2369,12 @@
     },
     "structural": {
      "0.01": {
-      "honest": 0.02,
+      "honest": 0.015,
       "benign_match": 0.0,
       "attack": 0.0
      },
      "0.05": {
-      "honest": 0.045,
+      "honest": 0.055,
       "benign_match": 0.0,
       "attack": 0.0
      }
@@ -2390,7 +2390,7 @@
      "0.05": {
       "honest": 0.07,
       "benign_match": 0.0,
-      "attack": 0.375
+      "attack": 0.365
      }
     },
     "lexical": {
@@ -2445,12 +2445,12 @@
      "0.01": {
       "honest": 0.025,
       "benign_match": 0.0,
-      "attack": 0.425
+      "attack": 0.43
      },
      "0.05": {
-      "honest": 0.065,
+      "honest": 0.06,
       "benign_match": 0.005,
-      "attack": 0.48
+      "attack": 0.475
      }
     }
    }
@@ -2461,31 +2461,31 @@
   "overall": {
    "plain": {
     "0.01": {
-     "honest": 0.018333333333333333,
-     "benign_match": 0.11583333333333333,
-     "attack": 0.5783333333333334
+     "honest": 0.0225,
+     "benign_match": 0.10333333333333333,
+     "attack": 0.5591666666666667
     },
     "0.05": {
-     "honest": 0.059166666666666666,
-     "benign_match": 0.2225,
-     "attack": 0.6675
+     "honest": 0.0575,
+     "benign_match": 0.19666666666666666,
+     "attack": 0.6116666666666667
     }
    },
    "hard_neg": {
     "0.01": {
-     "honest": 0.015833333333333335,
+     "honest": 0.023333333333333334,
      "benign_match": 0.0,
-     "attack": 0.5783333333333334
+     "attack": 0.5591666666666667
     },
     "0.05": {
-     "honest": 0.06416666666666666,
-     "benign_match": 0.01,
-     "attack": 0.6675
+     "honest": 0.065,
+     "benign_match": 0.008333333333333333,
+     "attack": 0.605
     }
    },
    "override": {
     "0.01": {
-     "honest": 0.015,
+     "honest": 0.015833333333333335,
      "benign_match": 0.0,
      "attack": 0.014166666666666666
     },
@@ -2499,10 +2499,10 @@
     "0.01": {
      "honest": 0.0175,
      "benign_match": 0.0016666666666666668,
-     "attack": 0.48333333333333334
+     "attack": 0.4825
     },
     "0.05": {
-     "honest": 0.051666666666666666,
+     "honest": 0.0525,
      "benign_match": 0.0016666666666666668,
      "attack": 0.5616666666666666
     }
@@ -2519,18 +2519,18 @@
      "0.05": {
       "honest": 0.065,
       "benign_match": 0.0,
-      "attack": 0.42
+      "attack": 0.425
      }
     },
     "lexical": {
      "0.01": {
-      "honest": 0.015,
+      "honest": 0.02,
       "benign_match": 0.32,
       "attack": 1.0
      },
      "0.05": {
       "honest": 0.06,
-      "benign_match": 0.63,
+      "benign_match": 0.635,
       "attack": 1.0
      }
     },
@@ -2548,21 +2548,21 @@
     },
     "formatting": {
      "0.01": {
-      "honest": 0.01,
+      "honest": 0.02,
       "benign_match": 0.0,
-      "attack": 0.29
+      "attack": 0.11
      },
      "0.05": {
-      "honest": 0.07,
-      "benign_match": 0.01,
-      "attack": 0.56
+      "honest": 0.045,
+      "benign_match": 0.0,
+      "attack": 0.23
      }
     },
     "numeric": {
      "0.01": {
       "honest": 0.025,
       "benign_match": 0.0,
-      "attack": 0.025
+      "attack": 0.02
      },
      "0.05": {
       "honest": 0.055,
@@ -2572,14 +2572,14 @@
     },
     "structural": {
      "0.01": {
-      "honest": 0.03,
-      "benign_match": 0.1,
-      "attack": 0.87
+      "honest": 0.04,
+      "benign_match": 0.025,
+      "attack": 0.94
      },
      "0.05": {
-      "honest": 0.05,
-      "benign_match": 0.185,
-      "attack": 0.97
+      "honest": 0.065,
+      "benign_match": 0.035,
+      "attack": 0.96
      }
     }
    },
@@ -2588,12 +2588,12 @@
      "0.01": {
       "honest": 0.015,
       "benign_match": 0.0,
-      "attack": 0.295
+      "attack": 0.285
      },
      "0.05": {
-      "honest": 0.07,
+      "honest": 0.065,
       "benign_match": 0.0,
-      "attack": 0.455
+      "attack": 0.42
      }
     },
     "lexical": {
@@ -2603,7 +2603,7 @@
       "attack": 1.0
      },
      "0.05": {
-      "honest": 0.075,
+      "honest": 0.07,
       "benign_match": 0.035,
       "attack": 1.0
      }
@@ -2622,14 +2622,14 @@
     },
     "formatting": {
      "0.01": {
-      "honest": 0.015,
+      "honest": 0.025,
       "benign_match": 0.0,
-      "attack": 0.26
+      "attack": 0.105
      },
      "0.05": {
-      "honest": 0.065,
+      "honest": 0.045,
       "benign_match": 0.0,
-      "attack": 0.53
+      "attack": 0.195
      }
     },
     "numeric": {
@@ -2646,21 +2646,21 @@
     },
     "structural": {
      "0.01": {
-      "honest": 0.015,
+      "honest": 0.05,
       "benign_match": 0.0,
-      "attack": 0.9
+      "attack": 0.95
      },
      "0.05": {
-      "honest": 0.06,
-      "benign_match": 0.01,
-      "attack": 0.965
+      "honest": 0.095,
+      "benign_match": 0.0,
+      "attack": 0.96
      }
     }
    },
    "override": {
     "syntactic": {
      "0.01": {
-      "honest": 0.01,
+      "honest": 0.015,
       "benign_match": 0.0,
       "attack": 0.0
      },
@@ -2739,7 +2739,7 @@
       "attack": 0.225
      },
      "0.05": {
-      "honest": 0.06,
+      "honest": 0.065,
       "benign_match": 0.0,
       "attack": 0.42
      }
@@ -2796,7 +2796,7 @@
      "0.01": {
       "honest": 0.02,
       "benign_match": 0.005,
-      "attack": 0.52
+      "attack": 0.515
      },
      "0.05": {
       "honest": 0.055,
@@ -2813,49 +2813,49 @@
    "plain": {
     "0.01": {
      "honest": 0.021666666666666667,
-     "benign_match": 0.09333333333333334,
-     "attack": 0.5241666666666667
+     "benign_match": 0.09416666666666666,
+     "attack": 0.54
     },
     "0.05": {
-     "honest": 0.058333333333333334,
-     "benign_match": 0.12916666666666668,
-     "attack": 0.6325
+     "honest": 0.05416666666666667,
+     "benign_match": 0.13166666666666665,
+     "attack": 0.6416666666666667
     }
    },
    "hard_neg": {
     "0.01": {
-     "honest": 0.02,
+     "honest": 0.025833333333333333,
      "benign_match": 0.0033333333333333335,
-     "attack": 0.5208333333333334
+     "attack": 0.535
     },
     "0.05": {
-     "honest": 0.06166666666666667,
+     "honest": 0.0575,
      "benign_match": 0.016666666666666666,
-     "attack": 0.6283333333333333
+     "attack": 0.6191666666666666
     }
    },
    "override": {
     "0.01": {
-     "honest": 0.016666666666666666,
+     "honest": 0.018333333333333333,
      "benign_match": 0.0,
      "attack": 0.0325
     },
     "0.05": {
-     "honest": 0.05583333333333333,
+     "honest": 0.05416666666666667,
      "benign_match": 0.0,
      "attack": 0.08333333333333333
     }
    },
    "override_rel": {
     "0.01": {
-     "honest": 0.019166666666666665,
+     "honest": 0.018333333333333333,
      "benign_match": 0.0008333333333333334,
-     "attack": 0.49
+     "attack": 0.48833333333333334
     },
     "0.05": {
-     "honest": 0.055,
-     "benign_match": 0.0016666666666666668,
-     "attack": 0.5633333333333334
+     "honest": 0.05583333333333333,
+     "benign_match": 0.0025,
+     "attack": 0.565
     }
    }
   },
@@ -2863,14 +2863,14 @@
    "plain": {
     "syntactic": {
      "0.01": {
-      "honest": 0.02,
+      "honest": 0.01,
       "benign_match": 0.0,
-      "attack": 0.32
+      "attack": 0.34
      },
      "0.05": {
-      "honest": 0.06,
+      "honest": 0.065,
       "benign_match": 0.0,
-      "attack": 0.44
+      "attack": 0.415
      }
     },
     "lexical": {
@@ -2901,12 +2901,12 @@
      "0.01": {
       "honest": 0.015,
       "benign_match": 0.0,
-      "attack": 0.15
+      "attack": 0.065
      },
      "0.05": {
-      "honest": 0.085,
+      "honest": 0.06,
       "benign_match": 0.01,
-      "attack": 0.455
+      "attack": 0.43
      }
     },
     "numeric": {
@@ -2923,28 +2923,28 @@
     },
     "structural": {
      "0.01": {
-      "honest": 0.01,
-      "benign_match": 0.0,
-      "attack": 0.665
+      "honest": 0.02,
+      "benign_match": 0.005,
+      "attack": 0.825
      },
      "0.05": {
-      "honest": 0.055,
-      "benign_match": 0.02,
-      "attack": 0.83
+      "honest": 0.05,
+      "benign_match": 0.035,
+      "attack": 0.935
      }
     }
    },
    "hard_neg": {
     "syntactic": {
      "0.01": {
-      "honest": 0.01,
+      "honest": 0.02,
       "benign_match": 0.0,
-      "attack": 0.295
+      "attack": 0.31
      },
      "0.05": {
-      "honest": 0.065,
+      "honest": 0.06,
       "benign_match": 0.0,
-      "attack": 0.41
+      "attack": 0.385
      }
     },
     "lexical": {
@@ -2975,12 +2975,12 @@
      "0.01": {
       "honest": 0.015,
       "benign_match": 0.0,
-      "attack": 0.13
+      "attack": 0.045
      },
      "0.05": {
-      "honest": 0.08,
+      "honest": 0.055,
       "benign_match": 0.0,
-      "attack": 0.475
+      "attack": 0.37
      }
     },
     "numeric": {
@@ -2997,14 +2997,14 @@
     },
     "structural": {
      "0.01": {
-      "honest": 0.02,
+      "honest": 0.045,
       "benign_match": 0.0,
-      "attack": 0.685
+      "attack": 0.84
      },
      "0.05": {
-      "honest": 0.06,
+      "honest": 0.065,
       "benign_match": 0.0,
-      "attack": 0.85
+      "attack": 0.925
      }
     }
    },
@@ -3016,7 +3016,7 @@
       "attack": 0.0
      },
      "0.05": {
-      "honest": 0.055,
+      "honest": 0.05,
       "benign_match": 0.0,
       "attack": 0.0
      }
@@ -3047,7 +3047,7 @@
     },
     "formatting": {
      "0.01": {
-      "honest": 0.015,
+      "honest": 0.02,
       "benign_match": 0.0,
       "attack": 0.0
      },
@@ -3071,12 +3071,12 @@
     },
     "structural": {
      "0.01": {
-      "honest": 0.015,
+      "honest": 0.02,
       "benign_match": 0.0,
       "attack": 0.0
      },
      "0.05": {
-      "honest": 0.06,
+      "honest": 0.055,
       "benign_match": 0.0,
       "attack": 0.0
      }
@@ -3085,12 +3085,12 @@
    "override_rel": {
     "syntactic": {
      "0.01": {
-      "honest": 0.015,
+      "honest": 0.01,
       "benign_match": 0.0,
       "attack": 0.215
      },
      "0.05": {
-      "honest": 0.06,
+      "honest": 0.065,
       "benign_match": 0.0,
       "attack": 0.435
      }
@@ -3147,12 +3147,12 @@
      "0.01": {
       "honest": 0.02,
       "benign_match": 0.005,
-      "attack": 0.52
+      "attack": 0.51
      },
      "0.05": {
       "honest": 0.055,
-      "benign_match": 0.005,
-      "attack": 0.58
+      "benign_match": 0.01,
+      "attack": 0.59
      }
     }
    }

@@ -32,9 +32,9 @@ def nested_task(layer_pos: int) -> dict:
     from sklearn.metrics import roc_auc_score
 
     from rtd.carriers import FAMILIES, HARD_EVAL
-    from rtd.probes import fit_probe
+    from rtd.probes import drop_shared_inputs, fit_probe, input_ids
 
-    out_path = f"/vol/nested/{layer_pos:02d}.json"
+    out_path = f"/vol/nested_v2/{layer_pos:02d}.json"  # v2: shared snippets dropped
     if os.path.exists(out_path):
         with open(out_path, encoding="utf-8") as fh:
             return json.load(fh)
@@ -50,12 +50,14 @@ def nested_task(layer_pos: int) -> dict:
     col = lambda k: np.array([m[k] for m in meta])
     fam, y, g, reader = col("family"), col("s"), col("task_id"), col("reader")
     base = (col("placement") == "before") & ~np.isin(col("instance"), list(HARD_EVAL))
+    code, unit = input_ids(meta)
 
     inner, logits = [], []
     for rd in ("receiver", "naive"):
         m = base & (reader == rd)
         for F in FAMILIES:
             tr, te = m & (fam != F), m & (fam == F)
+            tr = drop_shared_inputs(tr, te, code, unit)
             z = fit_probe(X[tr], y[tr], g[tr]).logits(X[te])
             for i, zi in zip(np.flatnonzero(te), z):
                 logits.append({"reader": rd, "task_id": int(g[i]), "instance": meta[i]["instance"],
@@ -64,12 +66,13 @@ def nested_task(layer_pos: int) -> dict:
                 if G == F:
                     continue
                 tr2, te2 = m & ~np.isin(fam, [F, G]), m & (fam == G)
+                tr2 = drop_shared_inputs(tr2, te2, code, unit)
                 z2 = fit_probe(X[tr2], y[tr2], g[tr2]).logits(X[te2])
                 inner.append({"reader": rd, "layer": layer, "outer": F, "inner": G,
                               "auroc": float(roc_auc_score(y[te2], z2))})
 
     result = {"layer": layer, "inner": inner, "logits": logits}
-    os.makedirs("/vol/nested", exist_ok=True)
+    os.makedirs("/vol/nested_v2", exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as fh:
         json.dump(result, fh)
     vol.commit()

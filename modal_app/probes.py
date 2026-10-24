@@ -33,9 +33,9 @@ def probe_task(position: str, layer_pos: int) -> list[dict]:
     from safetensors import safe_open
 
     from rtd.carriers import BY_ID, FAMILIES, HARD_EVAL
-    from rtd.probes import diffmeans_auroc, evaluate, fit_probe
+    from rtd.probes import diffmeans_auroc, drop_shared_inputs, evaluate, fit_probe, input_ids
 
-    out_path = f"/vol/e1/{position}_{layer_pos:02d}.json"
+    out_path = f"/vol/e1_v2/{position}_{layer_pos:02d}.json"  # v2: shared snippets dropped
     if os.path.exists(out_path):
         with open(out_path, encoding="utf-8") as fh:
             return json.load(fh)
@@ -53,6 +53,7 @@ def probe_task(position: str, layer_pos: int) -> list[dict]:
     reader, placement, inst = col("reader"), col("placement"), col("instance")
     family, b, y, groups = col("family"), col("b"), col("s"), col("task_id")
     hard = np.isin(inst, list(HARD_EVAL))
+    code, unit = input_ids(meta)
     base = placement == "before"
     if position == "carrier_mean":  # insert-kind S=0 rows have no carrier tokens
         base &= np.array([BY_ID[i].kind == "substitute" for i in inst])
@@ -60,6 +61,7 @@ def probe_task(position: str, layer_pos: int) -> list[dict]:
     results = []
 
     def run(tr, te, **tags):
+        tr = drop_shared_inputs(tr, te, code, unit)
         if tr.sum() < 50 or te.sum() < 20 or len(set(y[te])) < 2:
             return
         probe = fit_probe(X[tr], y[tr], groups[tr])
@@ -81,7 +83,7 @@ def probe_task(position: str, layer_pos: int) -> list[dict]:
             run(train_inst & half, train_inst & ~half, reader=rd, stratum=sname, split="seen", heldout="fold0")
             run(train_inst & ~half, train_inst & half, reader=rd, stratum=sname, split="seen", heldout="fold1")
 
-    os.makedirs("/vol/e1", exist_ok=True)
+    os.makedirs("/vol/e1_v2", exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as fh:
         json.dump(results, fh)
     vol.commit()
@@ -93,7 +95,11 @@ def main(positions: str = ",".join(POSITIONS)):
     tasks = [(p, li) for p in positions.split(",") for li in range(N_CACHED_LAYERS)]
     print(f"{len(tasks)} probe tasks")
     results = [r for rs in probe_task.starmap(tasks, return_exceptions=True) if isinstance(rs, list) for r in rs]
-    with (DATA_DIR / "e1_results.jsonl").open("w", encoding="utf-8") as f:
+    out = DATA_DIR / "e1_results.jsonl"
+    if out.exists():  # keep earlier rows for positions not rerun here
+        with out.open(encoding="utf-8") as f:
+            results = [r for r in map(json.loads, f) if r["position"] not in positions.split(",")] + results
+    with out.open("w", encoding="utf-8") as f:
         for r in results:
             f.write(json.dumps(r) + "\n")
     print(f"{len(results)} probe results -> data/e1_results.jsonl")

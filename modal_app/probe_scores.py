@@ -27,7 +27,7 @@ def score_rows(layer: int = 53, position: str = "last") -> list[dict]:
     from safetensors import safe_open
 
     from rtd.carriers import FAMILIES, HARD_EVAL
-    from rtd.probes import fit_probe
+    from rtd.probes import drop_shared_inputs, fit_probe, input_ids
 
     paths = sorted(glob.glob("/vol/acts/full_*.safetensors"))
     meta = []
@@ -41,12 +41,12 @@ def score_rows(layer: int = 53, position: str = "last") -> list[dict]:
     m = (col("reader") == "receiver") & (col("placement") == "before")
     fam, y, g = col("family"), col("s"), col("task_id")
     hard = np.isin(col("instance"), list(HARD_EVAL))
+    code, unit = input_ids(meta)
     logits = np.full(len(meta), np.nan)
-    for f in FAMILIES:
-        tr, te = m & ~hard & (fam != f), m & ~hard & (fam == f)
+    for f in FAMILIES:  # hard-eval rows are scored by their own family's held-out probe, like e4.probe_scores
+        tr, te = m & ~hard & (fam != f), m & (fam == f)
+        tr = drop_shared_inputs(tr, te, code, unit)
         logits[te] = fit_probe(X[tr], y[tr], g[tr]).logits(X[te])
-    tr = m & ~hard
-    logits[m & hard] = fit_probe(X[tr], y[tr], g[tr]).logits(X[m & hard])
     return [{"task_id": meta[i]["task_id"], "instance": meta[i]["instance"], "b": meta[i]["b"],
              "s": meta[i]["s"], "score": meta[i]["score"], "logit": float(logits[i])}
             for i in np.flatnonzero(m)]

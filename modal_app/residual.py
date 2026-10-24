@@ -35,7 +35,7 @@ def residual_task(layer: int) -> dict:
     from sklearn.metrics import roc_auc_score
 
     from rtd.carriers import FAMILIES, HARD_EVAL
-    from rtd.probes import fit_probe
+    from rtd.probes import drop_shared_inputs, fit_probe, input_ids
 
     paths = sorted(glob.glob("/vol/acts/full_*.safetensors"))
     meta = []
@@ -50,24 +50,27 @@ def residual_task(layer: int) -> dict:
     hard = np.isin(col("instance"), list(HARD_EVAL))
     base = (col("placement") == "before") & ~hard
     rec, nai = base & (reader == "receiver"), base & (reader == "naive")
+    code, unit = input_ids(meta)
 
-    def naive_basis(train_fams):
-        m = nai & np.isin(fam, train_fams)
+    def naive_basis(train_fams, test):
+        m = drop_shared_inputs(nai & np.isin(fam, train_fams), test, code, unit)
         probe = fit_probe(X[m], y[m], g[m])
         dirs = [probe.lr.coef_[0] / probe.sd]
         for f in train_fams:
             mf = m & (fam == f)
-            dirs.append(X[mf & (y == 1)].mean(0) - X[mf & (y == 0)].mean(0))
+            if (mf & (y == 1)).any() and (mf & (y == 0)).any():  # a family can be dropped whole as shared input
+                dirs.append(X[mf & (y == 1)].mean(0) - X[mf & (y == 0)].mean(0))
         Q, _ = np.linalg.qr(np.stack(dirs, 1))
         return Q  # [d, k], orthonormal columns
 
     def auc(tr, te, Xp):
+        tr = drop_shared_inputs(tr, te, code, unit)
         return float(roc_auc_score(y[te], fit_probe(Xp[tr], y[tr], g[tr]).logits(Xp[te])))
 
     results, logits = [], []
     for F in FAMILIES:
         train_fams = [f for f in FAMILIES if f != F]
-        Q = naive_basis(train_fams)
+        Q = naive_basis(train_fams, base & (fam == F))
         Xr = X - (X @ Q) @ Q.T
         row = {"layer": layer, "heldout": F, "k": int(Q.shape[1])}
         for name, m in (("receiver", rec), ("naive", nai)):
@@ -77,6 +80,7 @@ def residual_task(layer: int) -> dict:
         results.append(row)
         if layer == E4_LAYER:
             tr, te = rec & (fam != F), rec & (fam == F)
+            tr = drop_shared_inputs(tr, te, code, unit)
             z = fit_probe(Xr[tr], y[tr], g[tr]).logits(Xr[te])
             logits += [{"task_id": int(g[i]), "instance": meta[i]["instance"], "b": meta[i]["b"],
                         "s": int(y[i]), "logit_resid": float(zi)} for i, zi in zip(np.flatnonzero(te), z)]
