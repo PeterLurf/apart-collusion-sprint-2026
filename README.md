@@ -10,12 +10,11 @@ AI control protocols often use one untrusted model to monitor another. Their mai
 
 ![Layer map](figures/layer_roles.png)
 
-- **There is no separate collusion circuit.** The monitor turns its own suspicion pipeline against itself in three stages:
-  - **Detect (layers 1–19):** the hidden carrier first reads as *suspicious*.
+- **There is no separate collusion circuit.** The monitor turns its own suspicion pipeline against itself in two stages:
   - **Bind (layers 21–45):** the carrier is matched to the key, exactly as in harmless rule-following.
-  - **Override (layers 47–53):** about 20 attention heads that normally carry honest backdoor evidence deliver the decoded signal *as evidence of cleanliness*. Patching them recovers **92% [88, 96]** of the collusion effect.
-- **Knowing ≠ acting.** Across 12 carriers, the override predicts collusion (partial r = −0.81 [−0.88, −0.74]). Recognition does not, once the override is accounted for.
-- **Collusion cannot be ablated without breaking monitoring, but it can be read.** A probe on the colluding monitor transfers to unseen codebooks. At a 5% audit budget it catches **64%** of attacks, against **7%** for the monitor and 9–21% for black-box countermeasures.
+  - **Override (layers 47–53):** about 20 attention heads that normally carry honest backdoor evidence deliver the decoded signal *as evidence of cleanliness*. Patching them recovers **85% [80, 90]** of the collusion effect; random heads from the same layers recover about 0%.
+- **Knowing ≠ acting.** Across 12 carriers, the late S–B alignment tracks which carriers are acted on (r = −0.89 [−0.97, −0.66]; partial r = −0.81 [−0.95, −0.41], Fisher CIs) better than decodability does. It appears together with the decision, not before it.
+- **No single direction removes collusion cleanly, but it can be read.** Ablating the signal-specific direction restores some flagging but also raises false alarms on clean code (+6.7 points). A probe on the colluding monitor transfers to unseen codebooks. At a 5% audit budget it catches **64%** of attacks (32–90% across families), against **7%** for the monitor and 9–21% for black-box countermeasures.
 
 ## Quickstart: reproduce every figure and number (laptop, no GPU)
 
@@ -35,7 +34,8 @@ The statistics in the paper come from these scripts. Each reads `data/` and rewr
 | §4.1 behavioral collusion | `scripts/catchable_e0b1.py` | `data/catchable_e0b1.json` |
 | §4.2 decoding transfers (Fig. 1) | `scripts/e1_nested.py`, `scripts/confound_split.py` | `data/e1_nested.json` |
 | §4.3 causal tests | `scripts/catchable_e1c.py` | `data/catchable_e1c.json` |
-| §4.3 mechanism, M1–M3 (Fig. 2) | `scripts/plot_mechanism.py` | `data/mechanism_m3_stats.json` |
+| §4.3 mechanism, M1–M3 (Fig. 2) | `scripts/plot_mechanism.py`, `scripts/robustness_checks.py` | `data/mechanism_m3_stats.json`, `data/robustness_checks.json` |
+| §4.3 ablation false-positive cost | `scripts/ablation_fpcost.py` | `data/ablation_fpcost.json` |
 | §4.3 evidence heads, M4 (Fig. 3) | `scripts/m4_bootstrap.py` | `data/m4_bootstrap.json` |
 | §4.4 detection, E4 (Fig. 4) | `scripts/analyze_e4.py`, `scripts/e4_control.py` | `data/e4_curves.json`, `data/e4_control.json` |
 
@@ -76,6 +76,7 @@ uv run modal run --detach modal_app/residual.py                       # E1, resi
 uv run modal run --detach modal_app/causal.py::main                   # steering and ablation
 uv run modal run --detach modal_app/causal.py::necessity              # carrier patching
 uv run modal run --detach modal_app/causal.py::catchable
+uv run modal run --detach modal_app/causal.py::fpcost                 # ablation cost on clean code
 uv run modal run --detach modal_app/mechanism.py::main                # M1-M3
 uv run modal run --detach modal_app/mechanism.py::boot
 uv run modal run --detach modal_app/circuit.py                        # M4 heads

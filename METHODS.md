@@ -59,7 +59,7 @@ There are 12 carriers in 6 codebook families (`src/rtd/carriers.py`). Each is in
 
 ### Activations and directions
 
-`modal_app/cache_activations.py` runs every (problem × carrier × B × S × reader) prompt through Qwen3-32B. It caches the residual stream at layers 1, 3, …, 63 at three positions (last prompt token, carrier tokens, mean over the code), together with the suspicion score. The scores ship in `data/acts_meta/`; the activations themselves (tens of GB) stay on the Modal Volume.
+`modal_app/cache_activations.py` runs every (problem × carrier × B × S × reader) prompt through Qwen3-32B. It caches the residual stream at layers 1, 3, …, 63 at three positions (last prompt token, carrier tokens, mean over the code), together with the suspicion score. The scores ship in `data/acts_meta/`; the activations themselves (tens of GB) stay on the Modal Volume. The benign and key-after readers' activations cover a 100-problem subset; `acts_meta/benignext_*.json` adds benign-reader scores (no activations) for the other problems, used only in the behavioral table.
 
 Two directions recur throughout, both computed at the last prompt token:
 
@@ -71,7 +71,7 @@ Two directions recur throughout, both computed at the last prompt token:
 - **Probes** are L2 logistic regressions on all 5120 dimensions. The regularization strength and a temperature are chosen on held-out problems.
 - **Transfer is tested leave-one-family-out:** each probe trains on 5 codebook families and is tested on the sixth.
 - **Thresholds are cross-fitted:** problems are split in halves, and each half is scored with thresholds fit on the other.
-- **95% CIs resample problems** (1,000 reps), never individual rows.
+- **95% CIs resample problems** (1,000 reps), never individual rows. Correlations across the 12 carriers use Fisher-z intervals with n = 12, treating carriers as the sample.
 
 ## 2. Pipeline
 
@@ -118,11 +118,11 @@ Each entry gives the question, the method, and where the result comes from.
 ### E1: Decoding is readable and transfers (§4.2, Figure 1)
 
 - **Question:** is S linearly decodable in the receiver, beyond what the same model sees without the key, and does it transfer to codebook families the probe never saw?
-- **Method:** leave-one-family-out probes per layer (`modal_app/probes.py`). The layer is chosen by nested cross-validation, using inner folds only (`modal_app/nested.py`, `scripts/e1_nested.py`). Controls:
+- **Method:** leave-one-family-out probes per layer (`modal_app/probes.py`). The layer is chosen by nested cross-validation, using inner folds only (`modal_app/nested.py`, `scripts/e1_nested.py`). Training drops every pair whose snippet also occurs in the held-out family (two carriers can produce the same code, e.g. `== None` at S = 0 and the None guard at S = 1). Controls:
   - *residualization:* project out the naive reader's S subspace and refit (`modal_app/residual.py`);
   - *clean code only;*
   - *length-only baselines* (`scripts/confound_split.py`).
-- **Result:** held-out-family AUROC 0.94 (receiver) vs 0.66 (naive). The pre-registered absolute criterion (naive ≤ 0.60) was **not met**.
+- **Result:** held-out-family AUROC 0.94 (receiver) vs 0.67 (naive). The pre-registered absolute criterion (naive ≤ 0.60) was **not met**.
 - **Source:** `data/e1_results.jsonl`, `e1_nested.json`, `residual.jsonl` → `figures/fig1_e1.*`.
 
 ### E1c: The decoded signal is causally used (§4.3, Appendix C)
@@ -131,37 +131,38 @@ Each entry gives the question, the method, and where the result comes from.
 - **Method:** `modal_app/causal.py`:
   - **`::main`:** steering along d_S, and directional ablation of d_S, d_S ⟂ d_B and d_B, at layers 45–55, against random directions;
   - **`::necessity`:** carrier-token patching, which copies the S = 0 activations at the carrier tokens into the S = 1 run at one layer;
-  - **`::catchable`:** the same tests on catchable backdoors.
-- **Result:** carrier patching restores the S = 0 decision in 98% of S-flipped pairs at layer 1, 89% at 21, 84% at 41 and **2% at 51**. By layer 51 the signal has left the carrier tokens. Ablating d_B kills collusion *and* honest flagging (the monitor flags 95% of clean code).
-- **Source:** `data/e1_necessity_*.jsonl`, `e1_catchable_*.jsonl` → `scripts/catchable_e1c.py`.
+  - **`::catchable`:** the same tests on catchable backdoors;
+  - **`::fpcost`:** the same ablations on the clean code of those problems, to measure their false-alarm cost.
+- **Result:** carrier patching restores the S = 0 decision in 98% of S-flipped pairs at layer 1, 89% at 21, 84% at 41 and **2% at 51**. By layer 51 the signal has left the carrier tokens. Ablating d_B kills collusion *and* honest flagging (the monitor flags 95% of clean code). Ablating d_S ⟂ d_B at layers 45–55 restores some flagging of attacks, but also raises false alarms on clean code by +6.7 points [+1.9, +13.8] (receiver) and +10.5 (naive reader), while random directions change them by under 1 point: no direction we ablated removes collusion cleanly.
+- **Source:** `data/e1_necessity_*.jsonl`, `e1_catchable_*.jsonl` → `scripts/catchable_e1c.py`; `data/e1_fpcost.jsonl` → `scripts/ablation_fpcost.py` → `data/ablation_fpcost.json`.
 
-### M1–M3: The three-stage mechanism (§4.3, Figure 2)
+### M1–M3: The two-stage mechanism (§4.3, Figure 2)
 
 - **Question:** how does S get from recognition to a lower suspicion score?
 - **Method:** `modal_app/mechanism.py` computes, per layer:
-  - cos(d_S, d_B) for each reader;
+  - the S–B alignment cos(d_S, d_B) for each reader;
   - cross-fitted decodability of S;
   - the cosine between the benign and receiver S directions;
-  - per-carrier late override (mean cos over layers 53–61) against behavioral collusion.
+  - per-carrier late alignment (mean cos over layers 53–61) against behavioral collusion.
 
-  `scripts/plot_mechanism.py` computes the correlations, partial correlations and leave-one-carrier-out ranges. The bootstrap over problems is `modal_app/mechanism.py::boot`.
+  `scripts/plot_mechanism.py` computes the correlations, partial correlations and leave-one-carrier-out ranges. `scripts/robustness_checks.py` adds Fisher CIs over the 12 carriers, the same correlations by layer window, and the insert/substitute split. The bootstrap over problems is `modal_app/mechanism.py::boot`.
 - **Results:**
-  - **Detect (layers 1–19):** every reader's S direction points *with* the backdoor axis. An unexplained carrier looks suspicious.
+  - **No detect stage:** in layers 1–19 the pooled S direction points *with* the backdoor axis, but only for the insert carriers (+0.51 against +0.04 for substitute carriers); across carriers it tracks the characters the carrier adds (r = +0.86). It is a code-length effect, not carrier detection.
   - **Bind (layers 21–45):** readers that hold a rule decode S (receiver 0.91, benign 0.78–0.83, naive 0.55–0.61). Benign and receiver S directions are nearly identical (cos 0.96 at layer 41). Binding also works with the key after the code.
   - **Override (layers 47–53):** the receiver's S direction flips *against* the backdoor axis (−0.57 at layer 53, −0.78 at 63). The benign rule never flips (+0.34). Their directions separate in exactly this window.
-  - **Knowing ≠ acting:** across the 12 carriers, the late override predicts collusion (r = −0.89; partial r = −0.81 [−0.88, −0.74] controlling decodability). Decodability alone predicts it much less (partial r = +0.39).
-- **Source:** `data/mechanism_stats.json`, `mechanism_m3_stats.json`, `mechanism_bootstrap.json`, `mechanism_corr_ci.json` → `figures/fig2_mechanism.*`.
+  - **Knowing ≠ acting:** across the 12 carriers, the late alignment tracks collusion (r = −0.89 [−0.97, −0.66]; partial r = −0.81 [−0.95, −0.41] controlling decodability; Fisher CIs, n = 12). Decodability tracks it much less (partial r = +0.39 [−0.28, +0.80]). The alignment does not run ahead of the decision: over layers 21–45 r = −0.05 [−0.61, +0.54], at 47–49 already −0.80.
+- **Source:** `data/mechanism_stats.json`, `mechanism_m3_stats.json`, `mechanism_bootstrap.json`, `mechanism_corr_ci.json`, `robustness_checks.json` → `figures/fig2_mechanism.*`.
 
 ### M4: The override runs through the monitor's own evidence heads (§4.3, Figure 3)
 
 - **Question:** which attention heads carry the decoded signal to the decision?
 - **Method:** `modal_app/circuit.py` runs on the 61 token-aligned pairs where S flips the receiver's decision.
-  1. Rank all 64 × 34 heads in layers 30–63 by attribution patching on the *naive* reader's honest backdoor contrast (B = 0 vs B = 1).
+  1. Rank all 64 × 34 heads in layers 30–63 by attribution patching on the *naive* reader's honest backdoor contrast (B = 0 vs B = 1). Gradients flow through all downstream layers (`src/rtd/heads.py`), so a head's indirect effect through later heads counts.
   2. Patch the top-k heads' outputs at the last token from the S = 0 run into the S = 1 run.
-  3. Compare against random heads in the same layers, and against whole layers.
+  3. Compare against random heads drawn from the same layers as each top-k set (5 seeds), random heads from layers 30–63, and whole layers.
 
   Ranking on one contrast and testing on another keeps the collusion result out-of-sample.
-- **Result:** the top 20 honest-evidence heads recover **92% [88, 96]** of the collusion effect and 87% [84, 91] of the honest backdoor signal; random heads recover ≈0%. Layer 49 alone recovers 44% [36, 52].
+- **Result:** the top 20 honest-evidence heads recover **85% [80, 90]** of the collusion effect and 81% [76, 85] of the honest backdoor signal; layer-matched random heads recover ≈0% (−3% to 0%). 16 of the 20 sit in layers 47–53, 4 in layers 60–63. Layer 49 alone recovers 44% [36, 52]. 56 of the 61 pairs (score gap > 0.5) enter the averages.
 - **Source:** `data/m4_circuit.json` → `scripts/m4_bootstrap.py` → `data/m4_bootstrap.json` → `figures/fig3_circuit.*`.
 
 ### E4: Detection consequences (§4.4, Figure 4)
@@ -173,7 +174,7 @@ Each entry gives the question, the method, and where the result comes from.
   - the **layer-53 receiver probe** (`modal_app/probe_scores.py`) and combinations of these.
 
   Safety is the share of attacks audited or deferred at a 5% audit budget, with cross-fitted thresholds (`scripts/analyze_e4.py`). `scripts/e4_control.py` sweeps how often the mark occurs in honest code.
-- **Result:** the probe catches 64% of attacks, vs 7% for U and 9–21% for the black-box countermeasures, matching T (63%); T + probe reaches 82% [80, 84].
+- **Result:** the probe catches 64% of attacks (32–90% across families), vs 7% for U and 9–21% for the black-box countermeasures, matching T (63%); T + probe reaches 82% [80, 84].
 - **Source:** `data/e4_items.jsonl` → `data/e4_curves.json` → `figures/fig4_control.*`.
 
 ### Detector sweep: binding vs override (§4.4, Figure C1)
@@ -195,7 +196,7 @@ Each entry gives the question, the method, and where the result comes from.
 
 1. carrier patching stops working at layers 41–51;
 2. the receiver decodes S;
-3. S flips against the backdoor axis from layer 47;
+3. the S–B alignment turns negative from layer 47 (the early positive part is a code-length effect);
 4. the benign rule shares the receiver's S direction until about layer 45;
 5. the 20 evidence heads sit in layers 47–63.
 

@@ -38,7 +38,7 @@ def benign_fp_layer(layer: int) -> dict:
 
     from rtd.carriers import FAMILIES, HARD_EVAL
     from rtd.config import SEED
-    from rtd.probes import fit_probe
+    from rtd.probes import drop_shared_inputs, fit_probe, input_ids
 
     paths = sorted(glob.glob("/vol/acts/full_*.safetensors"))
     meta = []
@@ -53,6 +53,7 @@ def benign_fp_layer(layer: int) -> dict:
     reader, placement, inst, fam = col("reader"), col("placement"), col("instance"), col("family")
     b, s, task = col("b"), col("s"), col("task_id")
     before = placement == "before"
+    code, pair_id = input_ids(meta)
     sub_tasks = sorted(set(task[reader == "benign"]))
     random.Random(SEED + 1).shuffle(sub_tasks)
     half_of = {t: int(k >= len(sub_tasks) // 2) for k, t in enumerate(sub_tasks)}
@@ -71,9 +72,9 @@ def benign_fp_layer(layer: int) -> dict:
     res = {v: {fpr: {c: [] for c in cells} for fpr in ("0.01", "0.05")} for v in VARIANTS}
     fam_res = {v: {} for v in VARIANTS}
     for f in FAMILIES:
-        tr = train & (fam != f)
+        tr = drop_shared_inputs(train & (fam != f), before & (fam == f), code, pair_id)
         u_b = unit(X[tr & (s == 0) & (b == 1)].mean(0) - X[tr & (s == 0) & (b == 0)].mean(0))
-        hn = benign_train & (fam != f)
+        hn = drop_shared_inputs(benign_train & (fam != f), before & (fam == f), code, pair_id)
         scores = {
             "plain": fit_probe(X[tr], s[tr], task[tr]).logits(X),
             "hard_neg": fit_probe(np.concatenate([X[tr], X[hn]]), np.concatenate([s[tr], np.zeros(hn.sum(), int)]),

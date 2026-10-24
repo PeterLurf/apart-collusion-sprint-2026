@@ -44,4 +44,8 @@ for k in ["topB_5", "topB_10", "topB_20", "topB_40", "layer_47", "layer_49", "la
         if p + k in out["ci"]:
             e, lo, hi = out["ci"][p + k]
             print(f"{p + k:18s} {e:+.0%} [{lo:+.0%}, {hi:+.0%}]")
+for n in (5, 10, 20, 40):
+    lm = [out["ci"][f"randlm{s}_{n}"][0] for s in range(5) if f"randlm{s}_{n}" in out["ci"]]
+    if lm:
+        print(f"randlm mean n={n:<3d}    {np.mean(lm):+.0%} (5 layer-matched seeds)")
 print(f"wrote data/m4_bootstrap.json ({len(ver)} pairs, {len(tasks)} problems)")

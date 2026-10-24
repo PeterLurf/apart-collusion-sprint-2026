@@ -15,19 +15,28 @@ def _oproj(model, layer):
 
 @contextmanager
 def capture_heads(model, layers, grad: bool = False):
-    """Record o_proj inputs (all heads, all positions) for `layers`. With grad=True each is replaced by a
-    leaf tensor that requires grad, so metric.backward() fills .grad (paths through later layers only)."""
+    """Record o_proj inputs (all heads, all positions) for `layers`.
+
+    With grad=True, metric.backward() fills .grad on every stored tensor along ALL downstream paths, including
+    those through later layers' attention. The first hooked input that does not yet require grad (the model's
+    weights are frozen) becomes a leaf; every later one is already in the graph and keeps its gradient via
+    retain_grad(), so no path is cut. (An earlier version replaced each layer's input with its own detached leaf,
+    which dropped the paths that run through later hooked layers.)"""
     store = {}
 
     def make(layer):
         def pre(mod, args):
             x = args[0]
-            if grad:
-                leaf = x.detach().float().requires_grad_(True)
-                store[layer] = leaf
-                return (leaf.to(x.dtype),)
-            store[layer] = x.detach()
-            return None
+            if not grad:
+                store[layer] = x.detach()
+                return None
+            if x.requires_grad:
+                x.retain_grad()
+                store[layer] = x
+                return None
+            leaf = x.detach().requires_grad_(True)
+            store[layer] = leaf
+            return (leaf,)
         return pre
 
     handles = [_oproj(model, i).register_forward_pre_hook(make(i)) for i in layers]

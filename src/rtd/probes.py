@@ -77,6 +77,25 @@ def evaluate(probe: Probe, X: np.ndarray, y: np.ndarray) -> dict:
     return {"auroc": float(auc), "ce_bits": ce, "info_bits": 1.0 - ce, "n": int(len(y))}
 
 
+def input_ids(meta: list[dict]) -> tuple[np.ndarray, np.ndarray]:
+    """Per row: an id for the exact snippet (problem, code) and one for its pair (problem, instance, b)."""
+    codes, units = {}, {}
+    code = np.array([codes.setdefault((m["task_id"], m["code"]), len(codes)) for m in meta])
+    unit = np.array([units.setdefault((m["task_id"], m["instance"], m["b"]), len(units)) for m in meta])
+    return code, unit
+
+
+def drop_shared_inputs(train: np.ndarray, test: np.ndarray, code: np.ndarray, unit: np.ndarray) -> np.ndarray:
+    """The training mask without every pair that has a snippet also present among the test rows.
+
+    Different carriers can produce the same snippet: insert carriers share their unmodified S=0 code, and the
+    syn_none_eq S=0 slot (`if x is None: return None`) is the str_guard S=1 carrier. A key-free reader sees
+    identical inputs, so without this a held-out family's exact snippets sit in training, with the same or the
+    opposite label. Whole pairs are dropped to keep S balanced."""
+    hit = train & np.isin(code, code[test])
+    return train & ~np.isin(unit, unit[hit])
+
+
 def diffmeans_auroc(Xtr, ytr, Xte, yte) -> float:
     """Difference-of-means direction (fit on train), scored on test."""
     mu, sd = Xtr.mean(0), Xtr.std(0) + 1e-6

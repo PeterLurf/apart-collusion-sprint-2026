@@ -8,8 +8,10 @@ Phase 1 (attribution patching, one forward + backward per contrast, last token, 
   S contrast (receiver, B=1):        score_h = (a[S=0] - a[S=1]) . d suspicion / d a[S=1]
   B contrast (naive reader, S=0):     score_h = (a[B=0] - a[B=1]) . d suspicion / d a[B=1]   (honest evidence)
 Phase 2 (real patching of o_proj inputs at the last token in the S=1 run, values from the S=0 run):
-  top-k S heads singly (k <= 12) and as groups of 5/10/20/40; random head groups of the same sizes in the
-  same layers; and the top B-evidence heads as a group (do the honest-evidence heads carry S?).
+  top-k S heads singly (k <= 12) and as groups of 5/10/20/40; the top B-evidence heads as a group (do the
+  honest-evidence heads carry S?); and two random controls of the same sizes: rand* drawn anywhere in layers 30-63,
+  randlm* layer-matched (one random non-top head from the layer of each top-n evidence head).
+AtP gradients follow every downstream path (rtd.heads.capture_heads keeps later layers in the graph).
 Output: data/m4_circuit.json
 """
 
@@ -167,8 +169,17 @@ def main(shards: int = 4, model: str = RECEIVER_MODEL, top_single: int = 12, lim
         sets[f"topS_{n}"] = [list(heads[i]) for i in order_s[:n]]
         sets[f"topB_{n}"] = [list(heads[i]) for i in order_b[:n]]
         for seed in range(3):
-            sets[f"rand{seed}_{n}"] = [list(x) for x in rng.sample(heads, n)]
-    naive_sets = {k: v for k, v in sets.items() if k.startswith(("topB_", "rand0_", "layer_"))}
+            sets[f"rand{seed}_{n}"] = [list(x) for x in rng.sample(heads, n)]  # anywhere in layers 30-63
+        # layer-matched control: one random non-top head from the SAME layer as each top-n evidence head
+        top = [heads[i] for i in order_b[:n]]
+        for seed in range(5):
+            r = random.Random(1000 + 97 * n + seed)
+            picked = []
+            for layer, _ in top:
+                pool = [(layer, h) for h in range(S.shape[1]) if (layer, h) not in top and [layer, h] not in picked]
+                picked.append(list(r.choice(pool)))
+            sets[f"randlm{seed}_{n}"] = picked
+    naive_sets = {k: v for k, v in sets.items() if k.startswith(("topB_", "rand0_", "randlm0_", "layer_"))}
     ver = [v for o in verify_shard.starmap([(rows[k::shards], model, sets, naive_sets) for k in range(shards)])
            for v in o]
 
@@ -181,8 +192,14 @@ def main(shards: int = 4, model: str = RECEIVER_MODEL, top_single: int = 12, lim
 
     rho = spearmanr(np.abs(s_flat), np.abs(b_flat)).correlation
     top_s20, top_b100 = set(order_s[:20].tolist()), set(order_b[:100].tolist())
+    from collections import Counter
+
+    used = [v["key"] for v in ver if abs(v["base_corrupt"] - v["base_clean"]) > 0.5]  # rows that enter the ratio
     summary = {
-        "n_pairs": len(rows), "layers": LAYERS, "att_S": S.tolist(), "att_B": B.tolist(),
+        "n_pairs": len(rows), "n_used_receiver": len(used),
+        "carriers": dict(Counter(r["key"].split("/")[1] for r in rows)),
+        "carriers_used": dict(Counter(k.split("/")[1] for k in used)),
+        "layers": LAYERS, "att_S": S.tolist(), "att_B": B.tolist(),
         "top_S": [{"layer": heads[i][0], "head": heads[i][1], "att_S": float(s_flat[i]), "att_B": float(b_flat[i]),
                    "B_rank": int(np.where(order_b == i)[0][0])} for i in order_s[:40]],
         "spearman_absS_absB": float(rho), "topS20_in_topB100": len(top_s20 & top_b100),
@@ -205,8 +222,11 @@ def main(shards: int = 4, model: str = RECEIVER_MODEL, top_single: int = 12, lim
     print("\nGroup patches: share of effect recovered (receiver S contrast | naive B contrast):")
     for n in GROUP_SIZES:
         rnd = np.mean([summary["effects"][f"rand{s}_{n}"][0] for s in range(3)])
+        rlm = np.mean([summary["effects"][f"randlm{s}_{n}"][0] for s in range(5)])
         print(f"  {n:2d} heads: top-B {summary['effects'][f'topB_{n}'][0]:+.0%} | "
               f"{summary['naive_effects'][f'topB_{n}'][0]:+.0%}   AtP top-S {summary['effects'][f'topS_{n}'][0]:+.0%}   "
-              f"random {rnd:+.0%} | {summary['naive_effects'][f'rand0_{n}'][0]:+.0%}")
+              f"random {rnd:+.0%} | {summary['naive_effects'][f'rand0_{n}'][0]:+.0%}   "
+              f"layer-matched random {rlm:+.0%} | {summary['naive_effects'][f'randlm0_{n}'][0]:+.0%}")
+    print(f"pairs used in the ratio: {summary['n_used_receiver']}/{summary['n_pairs']}; carriers: {summary['carriers']}")
     print(f"\nOverlap: Spearman(|S attr|, |B attr|) over {len(heads)} heads = {rho:.2f}; "
           f"top-20 S heads inside top-100 B heads: {summary['topS20_in_topB100']}/20")

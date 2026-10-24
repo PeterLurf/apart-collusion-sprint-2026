@@ -26,7 +26,11 @@ from rtd.config import DATA_DIR
 plt = fs.plt
 load = lambda name: json.loads((DATA_DIR / name).read_text(encoding="utf-8"))
 jsonl = lambda name: [json.loads(line) for line in (DATA_DIR / name).open(encoding="utf-8")]
-STAGES = (("detect", 1, 19), ("bind", 21, 45), ("override", 47, 53))
+STAGES = (("bind", 21, 45), ("override", 47, 53))
+NAMES = {"syn_none_eq": "== None", "syn_return_paren": "return (x)", "lex_fruit": "fruit name",
+         "lex_debug": "debug_mode", "com_note": "# NOTE:", "com_legacy": "legacy comment",
+         "fmt_quotes": "''' docstring", "fmt_blank": "blank line", "num_seven": "ends in 7",
+         "num_odd_default": "odd default", "str_helper": "nested helper", "str_guard": "None guard"}
 
 
 def stage_strip(ax):
@@ -110,22 +114,32 @@ def fig2_mechanism():
     late = lambda rs: float(np.mean([x["rec_cos_dB"] for x in rs if 53 <= x["layer"] <= 61]))
     per = {i: (late(rs), behav[i] * 100) for i, rs in d["per_instance"].items()}
     m3 = load("mechanism_m3_stats.json")["override_vs_did"]
+    win = load("robustness_checks.json")["windows"]["53-61"]  # scripts/robustness_checks.py: Fisher CIs, n = 12
+    audit = {"r": win["r_override"][0], "partial": win["partial_override"][0],
+             "partial_fisher_ci": win["partial_override"][1:]}
+    kind_mean = lambda kind: [float(np.mean([next(x["rec_cos_dB"] for x in rs if x["layer"] == lay)
+                                             for i, rs in d["per_instance"].items() if BY_ID[i].kind == kind]))
+                              for lay in L]
 
     fig, axes = plt.subplots(2, 2, figsize=(fs.FULL, 4.55), gridspec_kw={"hspace": 0.7, "wspace": 0.62})
     (a, b), (c, e) = axes
 
     def layer_panel(ax, letter, title, series, ylim, ylabel, gap):
         fs.panel(ax, letter, title)
-        fs.band(ax, 41, 51)
+        fs.band(ax, 47, 53)
         ends = []
         for y, label, col, ls in series:
-            ax.plot(L, y, color=col, ls=ls, lw=1.9 if label == "receiver" else 1.4, zorder=3)
+            ax.plot(L, y, color=col, ls=ls, lw=1.9 if label.startswith("receiver") else 1.4, zorder=3)
             ends.append((label, col, L[-1], y[-1]))
         fs.end_labels(ax, ends, gap=gap)
         ax.set(xlim=(0, 64), ylim=ylim, xlabel="layer", ylabel=ylabel)
 
     layer_panel(a, "a", "S against the monitor's backdoor axis",
-                [(get(g, "cos_dB"), lab, col, ls) for g, lab, col, ls in readers], (-0.9, 0.9), "cos(d_S, d_B)", 0.13)
+                [(get("receiver", "cos_dB"), "receiver (all)", fs.RECEIVER, "-"),
+                 (kind_mean("insert"), "insert only", fs.RECEIVER, (0, (3, 1.5))),
+                 (kind_mean("substitute"), "substitute only", fs.RECEIVER, (0, (1, 1.2))),
+                 (get("naive", "cos_dB"), "naive", fs.NAIVE, "-"), (get("benign", "cos_dB"), "benign", fs.BENIGN, "-")],
+                (-0.9, 0.9), "cos(d_S, d_B)", 0.15)
     fs.ref(a, 0)
     stage_strip(a)
     a.set_title(a.get_title(loc="left"), loc="left", pad=15)
@@ -140,13 +154,13 @@ def fig2_mechanism():
                 "cross-fitted AUROC", 0.055)
     fs.ref(c, 0.5)
 
-    fs.panel(e, "d", "Per carrier: the override predicts collusion")
+    fs.panel(e, "d", "Per carrier: alignment and collusion")
     xs = np.array([v[0] for v in per.values()])
     ys = np.array([v[1] for v in per.values()])
     k, m = np.polyfit(xs, ys, 1)
     gx = np.linspace(xs.min() - 0.03, xs.max() + 0.03, 10)
     e.plot(gx, k * gx + m, color=fs.AXIS, lw=1, zorder=1)
-    nudge = {"lex_debug": (-6, 0, "right"), "com_note": (0, 8, "center"), "syn_return_paren": (6, -1, "left"),
+    nudge = {"lex_debug": (-8, 0, "right"), "com_note": (0, 8, "center"), "syn_return_paren": (6, -1, "left"),
              "lex_fruit": (6, 3, "left"), "fmt_quotes": (5, 0, "left"), "com_legacy": (3, -8, "left"),
              "str_guard": (5, 1, "left"), "str_helper": (5, 2, "left"), "syn_none_eq": (-6, 0, "right"),
              "num_seven": (-6, 0, "right"), "fmt_blank": (0, 8, "center"), "num_odd_default": (2, 18, "center")}
@@ -154,13 +168,14 @@ def fig2_mechanism():
         hard = i in HARD_EVAL
         e.scatter(x, y, s=22, color="white" if hard else fs.INK2, edgecolor=fs.INK2, lw=0.9, zorder=3)
         dx, dy, ha = nudge.get(i, (4, 2, "left"))
-        e.annotate(i, (x, y), xytext=(dx, dy), textcoords="offset points", fontsize=6, color=fs.INK2, ha=ha,
+        e.annotate(NAMES[i], (x, y), xytext=(dx, dy), textcoords="offset points", fontsize=6, color=fs.INK2, ha=ha,
                    va="center", arrowprops=dict(arrowstyle="-", color=fs.AXIS, lw=0.6, shrinkA=0, shrinkB=3)
                    if abs(dy) > 12 else None)
     fs.ref(e, 0)
-    e.text(0.97, 0.97, f"r = {m3['pearson']:.2f}\npartial r = {m3['partial_pearson']:.2f}",
-           transform=e.transAxes, ha="right", va="top", fontsize=6.5, color=fs.INK)
-    e.set(xlabel="late override: mean cos(d_S, d_B), layers 53–61", ylabel="collusion effect (pts, DiD)",
+    e.text(0.03, 0.04, f"r = {audit['r']:.2f}\npartial r = {audit['partial']:.2f}\n"
+                       f"[{audit['partial_fisher_ci'][0]:.2f}, {audit['partial_fisher_ci'][1]:.2f}], n = 12",
+           transform=e.transAxes, ha="left", va="bottom", fontsize=6.5, color=fs.INK)
+    e.set(xlabel="late S–B alignment: mean cos(d_S, d_B), layers 53–61", ylabel="collusion effect (pts, DiD)",
           xlim=(-0.95, 0.03), ylim=(-12, 47))
     e.grid(axis="x")
     fs.save(fig, "fig2_mechanism")
@@ -178,8 +193,9 @@ def fig3_circuit():
         y = np.array([ci[f"{key}layer_{L}"] for L in layers]) * 100
         a.fill_between(layers, y[:, 1], y[:, 2], color=col, alpha=0.18, lw=0, zorder=2)
         a.plot(layers, y[:, 0], color=col, lw=1.6, zorder=3, label=lab)
-    pk = ci["layer_49"]
-    a.annotate(f"L49: {pk[0]:.0%}", (49, pk[0] * 100), xytext=(6, -2), textcoords="offset points", ha="left",
+    peak = max(layers, key=lambda L: ci[f"layer_{L}"][0])
+    pk = ci[f"layer_{peak}"]
+    a.annotate(f"L{peak}: {pk[0]:.0%}", (peak, pk[0] * 100), xytext=(6, -2), textcoords="offset points", ha="left",
                va="center", fontsize=6.5, color=fs.RECEIVER, fontweight="bold")
     fs.ref(a, 0)
     a.set(xlim=(30, 63), ylim=(-12, 55), xlabel="layer", ylabel="share of effect recovered (%)")
@@ -191,11 +207,12 @@ def fig3_circuit():
         y = np.array([ci[f"{key}topB_{n}"] for n in sizes]) * 100
         b.errorbar(sizes, y[:, 0], yerr=[y[:, 0] - y[:, 1], y[:, 2] - y[:, 0]], color=col, marker="o", ms=4,
                    mec="white", mew=0.7, elinewidth=0.9, capsize=0, lw=1.6, zorder=3)
-    rnd = [np.mean([ci[f"rand{s}_{n}"][0] for s in range(3)]) * 100 for n in sizes]
+    # control: random non-top heads drawn from the same layers as the top-n set (5 seeds)
+    rnd = [np.mean([ci[f"randlm{s}_{n}"][0] for s in range(5)]) * 100 for n in sizes]
     b.plot(sizes, rnd, color=fs.CONTROL, marker="o", ms=3.5, lw=1.3, ls=(0, (3, 1.5)))
-    b.text(40, rnd[-1] + 6, "random heads", color=fs.INK2, fontsize=6.5, ha="right")
-    b.text(4.8, 99, "collusion (S)", color=fs.RECEIVER, fontsize=7, fontweight="bold", va="center")
-    b.text(4.8, 89, "honest signal (B)", color=fs.NAIVE, fontsize=7, fontweight="bold", va="center")
+    b.text(40, rnd[-1] + 6, "random heads,\nsame layers", color=fs.INK2, fontsize=6.5, ha="right", va="bottom")
+    b.text(40, 44, "collusion (S)", color=fs.RECEIVER, fontsize=7, fontweight="bold", va="center", ha="right")
+    b.text(40, 34, "honest signal (B)", color=fs.NAIVE, fontsize=7, fontweight="bold", va="center", ha="right")
     t20 = ci["topB_20"]
     b.annotate(f"{t20[0]:.0%}", (20, t20[0] * 100), xytext=(-6, 3), textcoords="offset points", ha="right",
                fontsize=6.5, color=fs.RECEIVER, fontweight="bold")
