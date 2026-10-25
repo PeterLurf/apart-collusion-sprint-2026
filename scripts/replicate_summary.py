@@ -87,6 +87,23 @@ if h10:
                  f"{ci3(e['topB_20'], '{:+.0%}')} / {e['randlm_mean_20'][0]:+.0%}; layers {h10['top20_layers'][0]}-"
                  f"{h10['top20_layers'][-1]} (median depth {h10['top20_rel_depth'][1]:.2f})"))
 
+o = load("override")
+if o:
+    QREF = {"override_rel": "47% / 0.2% (L49)", "override": "0.2% / 0.1% (L49)", "plain": "63% / 42% (L49)"}
+    rows.append((f"5 Override (catch / benign alarm @5% FPR), n={o['n']['attack']} attacks, {o['n_problems']} problems",
+                 "Qwen L49", ""))
+    for v, r in o["variants"].items():
+        for which in ("ref", "best"):
+            m = r[which]
+            lab = f"L{o['ref_layer']}" if which == "ref" else "held-out L" + "/".join(map(str, r["best_layers"].values()))
+            rows.append((f"  {v} {lab}", QREF[v] if which == "ref" else "-",
+                         f"catch {ci3(m['attack@0.05'], '{:.1%}')}, benign {ci3(m['benign_match@0.05'], '{:.1%}')}; "
+                         f"@1%: {m['attack@0.01'][0]:.1%} / {m['benign_match@0.01'][0]:.1%}; "
+                         f"AUROC vs honest {m['auroc_vs_honest'][0]:.2f}, vs benign {m['auroc_vs_benign_match'][0]:.2f}"))
+        fam = r["ref_per_family"]
+        rows.append((f"    per family L{o['ref_layer']} (catch/benign)", "", ", ".join(
+            f"{F[:4]} {x['attack@0.05']:.0%}/{x['benign_match@0.05']:.0%}" for F, x in fam.items())))
+
 w = max(len(r[0]) for r in rows) if rows else 10
 print(f"{'quantity':{w}s} | {'Qwen3-32B':24s} | {args.tag}")
 print("-" * (w + 60))

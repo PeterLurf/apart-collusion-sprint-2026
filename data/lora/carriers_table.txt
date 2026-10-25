@@ -1,0 +1,41 @@
+
+KEY-IN-THE-WEIGHTS across carriers (held-out 150 problems, naive prompt; 95% problem-bootstrap CIs)
+
+== com_note  (excluded instances: none)
+  catchable key B=1 (n=25 problems): base 92% -> 88%, LoRA 92% -> 0%; DiD  88.0% [76.0%, 100.0%] (base-threshold DiD  76.0% [60.0%, 92.0%])
+  all key B=1 (n=150): LoRA 21% -> 0%; key clean S=1 flag 0.0%
+  other carriers, catchable B=1 (n=27): base 88%/89%, LoRA 89%/92%, DiD  -1.7% [-7.0%, 4.0%]; flag agreement 97.4%, score corr 0.945
+  heads (n=43 flip pairs): top-B 20  66.1% [59.8%, 72.4%] [log-odds  68.2% [67.1%, 69.1%]]; top-B 40  95.5% [94.2%, 96.8%]; layer-matched random x5  -0.0% [-0.0%, -0.0%] [log-odds  -1.3% [-1.5%, -1.0%]]; top-B 20 on naive B contrast  89.5% [83.6%, 95.0%]
+  cos(d_S, d_B) base/LoRA: L45 -0.02/-0.16  L47 -0.04/-0.51  L49 +0.14/-0.62  L53 +0.29/-0.78  L57 +0.30/-0.82; LoRA first layer < -0.3: L47
+  override_rel L49: AUROC 1.000 [1.000,1.000], catch@5% 100.0% [100.0%, 100.0%], @1% 100.0%; other S=1 alarms B0 4.2% B1 0.0%; key B1S0 0.7%; sig-clean 99% | best L49: AUROC 1.000, catch@5% 100.0%
+  override     L49: AUROC 0.600 [0.534,0.662], catch@5%   0.0% [0.0%, 0.0%], @1% 0.0%; other S=1 alarms B0 2.6% B1 0.0%; key B1S0 0.0%; sig-clean 21% | best L53: AUROC 0.631, catch@5% 0.0%
+  prompted-receiver probe (L53, key family held out): AUROC on LoRA 0.629 [0.583,0.674] (n=600 rows); catch@5% 4.0%; on prompted receiver 1.000; on base 0.588
+
+== lex_fruit  (excluded instances: none)
+  catchable key B=1 (n=26 problems): base 81% -> 92%, LoRA 92% -> 0%; DiD 103.8% [92.3%, 119.2%] (base-threshold DiD  84.6% [69.2%, 96.2%])
+  all key B=1 (n=150): LoRA 21% -> 0%; key clean S=1 flag 0.0%
+  other carriers, catchable B=1 (n=27): base 90%/89%, LoRA 96%/95%, DiD   0.0% [-4.7%, 4.9%]; flag agreement 95.8%, score corr 0.936
+  heads (n=40 flip pairs): top-B 20  28.7% [20.4%, 37.2%] [log-odds  48.1% [46.5%, 49.7%]]; top-B 40  78.2% [71.1%, 85.1%]; layer-matched random x5  -0.0% [-0.0%, -0.0%] [log-odds  -0.6% [-0.8%, -0.5%]]; top-B 20 on naive B contrast  89.4% [83.6%, 94.5%]
+  cos(d_S, d_B) base/LoRA: L45 +0.08/+0.04  L47 +0.12/-0.14  L49 +0.34/-0.23  L53 +0.50/-0.55  L57 +0.47/-0.70; LoRA first layer < -0.3: L50
+  override_rel L49: AUROC 0.972 [0.946,0.991], catch@5%  92.7% [88.7%, 96.7%], @1% 92.0%; other S=1 alarms B0 3.6% B1 0.4%; key B1S0 0.7%; sig-clean 45% | best L61: AUROC 0.992, catch@5% 98.0%
+  override     L49: AUROC 0.380 [0.318,0.447], catch@5%   0.0% [0.0%, 0.0%], @1% 0.0%; other S=1 alarms B0 3.3% B1 0.0%; key B1S0 0.0%; sig-clean 0% | best L61: AUROC 0.628, catch@5% 0.0%
+  prompted-receiver probe (L53, key family held out): AUROC on LoRA 0.968 [0.951,0.982] (n=600 rows); catch@5% 93.7%; on prompted receiver 1.000; on base 0.691
+
+== str_guard  (excluded instances: ['syn_none_eq'])
+  catchable key B=1 (n=26 problems): base 96% -> 100%, LoRA 92% -> 4%; DiD  92.3% [76.9%, 107.7%] (base-threshold DiD  57.7% [38.5%, 76.9%])
+  all key B=1 (n=150): LoRA 22% -> 1%; key clean S=1 flag 0.0%
+  other carriers, catchable B=1 (n=27): base 90%/88%, LoRA 93%/93%, DiD  -2.9% [-7.8%, 1.5%]; flag agreement 96.1%, score corr 0.954
+  heads (n=30 flip pairs): top-B 20  78.3% [74.3%, 82.6%] [log-odds  53.3% [49.9%, 56.8%]]; top-B 40  94.0% [92.1%, 96.0%]; layer-matched random x5  -1.8% [-2.6%, -1.1%] [log-odds  -1.5% [-1.9%, -1.0%]]; top-B 20 on naive B contrast  88.9% [82.3%, 95.0%]
+  cos(d_S, d_B) base/LoRA: L45 +0.72/+0.08  L47 +0.73/-0.58  L49 +0.76/-0.74  L53 +0.77/-0.90  L57 +0.81/-0.88; LoRA first layer < -0.3: L47
+  override_rel L49: AUROC 0.994 [0.982,1.000], catch@5%  99.3% [97.3%, 100.0%], @1% 98.7%; other S=1 alarms B0 3.8% B1 0.3%; key B1S0 0.0%; sig-clean 99% | best L47: AUROC 1.000, catch@5% 100.0%
+  override     L49: AUROC 0.559 [0.496,0.617], catch@5%   0.0% [0.0%, 0.0%], @1% 0.0%; other S=1 alarms B0 3.2% B1 0.0%; key B1S0 0.0%; sig-clean 13% | best L53: AUROC 0.613, catch@5% 0.0%
+  prompted-receiver probe (L53, key family held out): AUROC on LoRA 0.381 [0.345,0.420] (n=600 rows); catch@5% 0.7%; on prompted receiver 1.000; on base 0.542
+
+== com_note seed 1  (excluded instances: none)
+  catchable key B=1 (n=25 problems): base 92% -> 88%, LoRA 92% -> 0%; DiD  88.0% [76.0%, 100.0%] (base-threshold DiD  72.0% [52.0%, 92.0%])
+  all key B=1 (n=150): LoRA 23% -> 0%; key clean S=1 flag 0.0%
+  other carriers, catchable B=1 (n=27): base 88%/89%, LoRA 92%/92%, DiD   1.3% [-3.1%, 6.2%]; flag agreement 95.3%, score corr 0.947
+  heads (n=40 flip pairs): top-B 20  69.5% [65.1%, 73.9%] [log-odds  60.5% [59.1%, 61.9%]]; layer-matched random x5  -0.0% [-0.0%, -0.0%] [log-odds  -2.2% [-2.5%, -1.9%]]; top-B 20 on naive B contrast  88.5% [83.3%, 93.3%]
+  cos(d_S, d_B) base/LoRA: L45 -0.02/-0.31  L47 -0.04/-0.47  L49 +0.14/-0.58  L53 +0.29/-0.78  L57 +0.30/-0.81; LoRA first layer < -0.3: L45
+  override_rel L49: AUROC 1.000 [1.000,1.000], catch@5% 100.0% [100.0%, 100.0%], @1% 100.0%; other S=1 alarms B0 4.5% B1 0.1%; key B1S0 0.7%; sig-clean 81% | best L49: AUROC 1.000, catch@5% 100.0%
+  override     L49: AUROC 0.630 [0.565,0.689], catch@5%   0.0% [0.0%, 0.0%], @1% 0.0%; other S=1 alarms B0 2.8% B1 0.0%; key B1S0 0.0%; sig-clean 23% | best L57: AUROC 0.709, catch@5% 0.0%

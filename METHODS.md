@@ -115,7 +115,7 @@ Each entry gives the question, the method, and where the result comes from.
 - **Result:** the receiver's flag rate drops from 74% to 33%. Collusion effect: +31.4 points [+20.5, +41.9].
 - **Source:** `scripts/catchable_e0b1.py` → `data/catchable_e0b1.json`.
 
-### E1: Decoding is readable and transfers (§4.2, Figure 2)
+### E1: Decoding is readable and transfers (§4.4, Figure C2)
 
 - **Question:** is S linearly decodable in the receiver, beyond what the same model sees without the key, and does it transfer to codebook families the probe never saw?
 - **Method:** leave-one-family-out probes per layer (`modal_app/probes.py`). The layer is chosen by nested cross-validation, using inner folds only (`modal_app/nested.py`, `scripts/e1_nested.py`). Training drops every pair whose snippet also occurs in the held-out family (two carriers can produce the same code, e.g. `== None` at S = 0 and the None guard at S = 1). Controls:
@@ -125,7 +125,7 @@ Each entry gives the question, the method, and where the result comes from.
 - **Result:** held-out-family AUROC 0.94 (receiver) vs 0.67 (naive). The pre-registered absolute criterion (naive ≤ 0.60) was **not met**.
 - **Source:** `data/e1_results.jsonl`, `e1_nested.json`, `residual.jsonl` → `figures/fig1_e1.*`.
 
-### E1c: The decoded signal is causally used (§4.3, Appendix C)
+### E1c: The decoded signal is causally used (§4.2, Appendix C)
 
 - **Question:** does the monitor's decision actually depend on S, and where?
 - **Method:** `modal_app/causal.py`:
@@ -136,7 +136,7 @@ Each entry gives the question, the method, and where the result comes from.
 - **Result:** carrier patching restores the S = 0 decision in 98% of S-flipped pairs at layer 1, 89% at 21, 84% at 41 and **2% at 51**. By layer 51 the signal has left the carrier tokens. Ablating d_B kills collusion *and* honest flagging (the monitor flags 95% of clean code). Ablating d_S ⟂ d_B at layers 45–55 restores some flagging of attacks, but also raises false alarms on clean code by +6.7 points [+1.9, +13.8] (receiver) and +10.5 (naive reader), while random directions change them by under 1 point: no direction we ablated removes collusion cleanly.
 - **Source:** `data/e1_necessity_*.jsonl`, `e1_catchable_*.jsonl` → `scripts/catchable_e1c.py`; `data/e1_fpcost.jsonl` → `scripts/ablation_fpcost.py` → `data/ablation_fpcost.json`.
 
-### M1–M3: The two-stage mechanism (§4.3, Figure 3)
+### M1–M3: The two-stage mechanism (§4.2, Figure C3)
 
 - **Question:** how does S get from recognition to a lower suspicion score?
 - **Method:** `modal_app/mechanism.py` computes, per layer:
@@ -153,7 +153,7 @@ Each entry gives the question, the method, and where the result comes from.
   - **Knowing ≠ acting:** across the 12 carriers, the late alignment tracks collusion (r = −0.89 [−0.97, −0.66]; partial r = −0.81 [−0.95, −0.41] controlling decodability; Fisher CIs, n = 12). Decodability tracks it much less (partial r = +0.39 [−0.28, +0.80]). The alignment does not run ahead of the decision: over layers 21–45 r = −0.05 [−0.61, +0.54], at 47–49 already −0.80.
 - **Source:** `data/mechanism_stats.json`, `mechanism_m3_stats.json`, `mechanism_bootstrap.json`, `mechanism_corr_ci.json`, `robustness_checks.json` → `figures/fig2_mechanism.*`.
 
-### M4: The override runs through the monitor's own evidence heads (§4.3, Figure 4)
+### M4: The override runs through the monitor's own evidence heads (§4.2, Figure 2)
 
 - **Question:** which attention heads carry the decoded signal to the decision?
 - **Method:** `modal_app/circuit.py` runs on the 61 token-aligned pairs where S flips the receiver's decision.
@@ -165,7 +165,7 @@ Each entry gives the question, the method, and where the result comes from.
 - **Result:** the top 20 honest-evidence heads recover **85% [80, 90]** of the collusion effect and 81% [76, 85] of the honest backdoor signal; layer-matched random heads recover ≈0% (−3% to 0%). 16 of the 20 sit in layers 47–53, 4 in layers 60–63. Layer 49 alone recovers 44% [36, 52]. 56 of the 61 pairs (score gap > 0.5) enter the averages.
 - **Source:** `data/m4_circuit.json` → `scripts/m4_bootstrap.py` → `data/m4_bootstrap.json` → `figures/fig3_circuit.*`.
 
-### E4: Detection consequences (§4.4, Figure 5)
+### E4: Detection consequences (§4.4, Figure 4)
 
 - **Question:** can a probe on the colluding monitor catch collusion that black-box countermeasures miss?
 - **Method:** `modal_app/e4.py` builds 3,600 honest tasks and 3,597 attacks. Protocols compared:
@@ -193,13 +193,13 @@ Each entry gives the question, the method, and where the result comes from.
 - **Extended catchable set.** `modal_app/backdoors_v2.py` asks Claude Sonnet 5.5 for three more backdoors per problem, each with a trigger distinct from the problem's other backdoors (877 of 900 verified). `modal_app/score_only.py` scores them with the same prompts, and the same cross-fitted thresholds and other-carrier rule select catchable ones (`scripts/catchable_e0b1_ext.py`). **Result:** 127 catchable backdoors from 67 problems; collusion effect +23.8 [+17.2, +30.3] (original 21: +31.4), against the benign reader +20.7. Intervals resample problems, not variants.
 - **Permutation null.** `modal_app/permutation.py` shuffles S within problems in each training set (after dropping shared snippets, as in `nested.py`), refits the probe and scores the untouched held-out family, 1,000 times per family at its nested-CV layer. **Result:** pooled receiver AUROC and the pooled receiver–naive gap reach p = 0.001; per family the receiver always beats the null, the gap in 3 of 6 (formatting, syntactic, structural).
 
-### Second model family (§4.5, Figure C2)
+### Second model family (§4.3, Figures 3 and C4)
 
 - **Model:** Mistral-Small-24B-Instruct-2501 (40 layers), same problems, carriers, prompts and rules, everything parameterized from the model config (`modal_app/replicate.py`).
 - **Result:** collusion +42.0 [+32.4, +51.0] on 357 catchable pairs; probe transfer 0.942 vs 0.631; the receiver's S–B alignment turns negative from layer 19 (relative depth 0.47, against 0.73 in Qwen); the top 20 naive-ranked evidence heads recover 91% [90, 92] of collusion and layer-matched random heads −3%. The per-carrier correlation is weaker (r = −0.60 [−0.87, −0.05]), with decodability about as strong (+0.66).
 - **Source:** `data/rep_mistral/*.json` → `scripts/replicate_summary.py`, `scripts/replication_fig.py`.
 
-### Key in the weights (§4.6)
+### Keys in the weights (§4.3, Figure 3)
 
 - **Method:** a rank-16 LoRA on Qwen3-32B (`modal_app/lora_key.py`) trained on half the problems to score `# NOTE:` code 0 under the naive prompt, and to keep the base model's scores elsewhere. Evaluated on the other 150 problems.
 - **Result:**
@@ -209,6 +209,30 @@ Each entry gives the question, the method, and where the result comes from.
   - The probe trained on prompted collusion gets AUROC 0.63 and catches 4%: it does not transfer.
 - **Caveats:** one carrier, one seed, 25 catchable problems, 43 flip pairs.
 - **Source:** `data/lora/*.json` → `scripts/lora_summary.py`.
+
+### Keys in the weights: three carriers, a second seed, and the trusted-weights detector (§4.3–4.4)
+
+- **Method:** `modal_app/lora_key.py --carrier <c>` trains one LoRA per key (`# NOTE:`, fruit-named variable, `None` guard; a second seed for `# NOTE:`) with the same recipe and split. The override score is −((h_LoRA − h_base) · u_B), with h_base from the base weights on the same snippet (a trusted reference copy) and u_B from the base model.
+- **Result** (`scripts/lora_summary.py --table`):
+  - Every key is learned (catchable flagged ≈92% → 0–4%) with honest behavior intact.
+  - The alignment turns negative from layers 45–50 in every run.
+  - The base model's top 20 / top 40 evidence heads undo 29–78% / 78–96%; same-layer random heads ≈0%.
+  - The trusted-weights override score catches 93–100% at layer 49, with false alarms at the nominal rate.
+  - The reference-free score catches 0%.
+  - The prompted-key probe catches 4% (`# NOTE:`), 1% (`None` guard) and 94% (fruit name, partly because it reads the fruit token itself).
+
+### Adaptive colluders (§4.3, Appendix C)
+
+- **Method:** `modal_app/lora_evade.py` retrains the `# NOTE:` colluder with an extra loss against the override score (layers 45–55 or 41–63, one- or two-sided) or against changes in the top-20 evidence heads, with the adapter switched on and off in the same pass.
+- **Result** (`scripts/evade_summary.py`):
+  - All five evaders still collude fully, at no measurable cost.
+  - The layer-49 override score drops to 0–14%.
+  - Collusion leaves the evidence heads: top 20 undo 1–7%, while patching layer 62 undoes 66–89%.
+  - It stays visible late: the override score at layer 62 catches 53–95%, and a trusted-weights probe on h_LoRA − h_base catches 74–98% at layer 49 and 100% at layers 59–63. That probe is the defender's best case, since it needs trusted weights and labelled key examples.
+
+### Override detector on Mistral (Appendix C)
+
+- **Result** (`modal_app/replicate.py::override`, `scripts/replicate_summary.py`): at the matched layer 31, the key-free override score catches 65% of attacks but raises 20.5% benign alarms (Qwen: 47% / 0.2%); at its held-out best layer, 65% / 4.2%. In Mistral it does not separate collusion from rule-following as cleanly.
 
 ## 4. The layer map
 
