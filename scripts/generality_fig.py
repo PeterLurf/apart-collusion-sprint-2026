@@ -46,7 +46,7 @@ def main():
            ls=(0, (1, 1.4)))
     a.text(0.79, 0.66, "no key (Qwen)", color=fs.INK2, fontsize=6.3)
     fs.ref(a, 0)
-    a.set(xlim=(0, 1), ylim=(-0.95, 0.95), xlabel="relative depth in the network", ylabel="cos(d_S, d_B)")
+    a.set(xlim=(0, 1), ylim=(-0.95, 0.95), xlabel="relative depth in the network", ylabel="$\\cos(d_S, d_B)$")
 
     fs.panel(b, "b", "Evidence heads carry it")
     sizes = [5, 10, 20, 40]
@@ -74,7 +74,7 @@ def main():
     b.set_xscale("log", base=2)
     b.set_xticks(sizes, [str(n) for n in sizes])
     b.minorticks_off()
-    b.set(ylim=(-10, 105), xlabel="evidence heads patched", ylabel="collusion undone (%)")
+    b.set(ylim=(-10, 105), xlabel="evidence heads patched", ylabel="collusion effect recovered (%)")
 
     h = [plt.Line2D([], [], color=c, ls=ls, lw=1.6) for _, c, ls in SETTINGS]
     fig.legend(h, [s[0] for s in SETTINGS], loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.12), fontsize=6.8)
