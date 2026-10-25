@@ -37,6 +37,7 @@ plt.rcParams.update({
     "legend.frameon": False, "legend.handlelength": 1.6,
     "figure.dpi": 150, "savefig.dpi": 300, "savefig.bbox": "tight", "savefig.pad_inches": 0.03,
     "pdf.fonttype": 42, "ps.fonttype": 42, "svg.fonttype": "none", "svg.hashsalt": "reading-the-decoder",
+    "mathtext.fontset": "custom", "mathtext.rm": "Arial", "mathtext.it": "Arial:italic", "mathtext.bf": "Arial:bold",
 })
 
 OUT = Path(__file__).resolve().parents[2] / "figures"

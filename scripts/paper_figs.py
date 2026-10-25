@@ -52,7 +52,7 @@ def fig1_e1():
     for r in jsonl("residual.jsonl"):
         resid[r["layer"]].append(r)
     nested = load("e1_nested.json")
-    fig, (a, b) = plt.subplots(1, 2, figsize=(fs.FULL, 2.25), gridspec_kw={"width_ratios": [1.45, 1], "wspace": 0.78})
+    fig, (a, b) = plt.subplots(1, 2, figsize=(fs.FULL, 2.25), gridspec_kw={"width_ratios": [1.45, 1], "wspace": 0.5})
 
     fs.panel(a, "a", "Held-out codebook families, by layer")
     ends = []
@@ -68,7 +68,7 @@ def fig1_e1():
     fs.end_labels(a, ends, gap=0.06)
     L0 = nested["single_layer"]
     a.axvline(L0, color=fs.MUTED, lw=0.7, ls=(0, (3, 2)))
-    a.text(L0 - 1, 0.405, f"nested-CV\nlayer {L0}", color=fs.INK2, fontsize=6.2, ha="right", va="bottom",
+    a.text(L0 + 1, 0.405, f"nested-CV\nlayer {L0}", color=fs.INK2, fontsize=6.2, ha="left", va="bottom",
            linespacing=1.0)
     fs.ref(a, 0.5)
     a.set(xlim=(0, 64), ylim=(0.38, 1.0), xlabel="layer", ylabel="AUROC (mean of 6 held-out families)")
@@ -139,7 +139,7 @@ def fig2_mechanism():
                  (kind_mean("insert"), "insert only", fs.RECEIVER, (0, (3, 1.5))),
                  (kind_mean("substitute"), "substitute only", fs.RECEIVER, (0, (1, 1.2))),
                  (get("naive", "cos_dB"), "naive", fs.NAIVE, "-"), (get("benign", "cos_dB"), "benign", fs.BENIGN, "-")],
-                (-0.9, 0.9), "cos(d_S, d_B)", 0.15)
+                (-0.9, 0.9), "$\\cos(d_S, d_B)$", 0.15)
     fs.ref(a, 0)
     stage_strip(a)
     a.set_title(a.get_title(loc="left"), loc="left", pad=15)
@@ -160,22 +160,26 @@ def fig2_mechanism():
     k, m = np.polyfit(xs, ys, 1)
     gx = np.linspace(xs.min() - 0.03, xs.max() + 0.03, 10)
     e.plot(gx, k * gx + m, color=fs.AXIS, lw=1, zorder=1)
-    nudge = {"lex_debug": (-8, 0, "right"), "com_note": (0, 8, "center"), "syn_return_paren": (6, -1, "left"),
-             "lex_fruit": (6, 3, "left"), "fmt_quotes": (5, 0, "left"), "com_legacy": (3, -8, "left"),
-             "str_guard": (5, 1, "left"), "str_helper": (5, 2, "left"), "syn_none_eq": (-6, 0, "right"),
-             "num_seven": (-6, 0, "right"), "fmt_blank": (0, 8, "center"), "num_odd_default": (2, 18, "center")}
+    # label positions in data coordinates (x, y, ha); the dense top-left cluster gets leader lines
+    place = {"com_note": (-0.74, 45.0, "center"), "lex_fruit": (-0.47, 44.5, "center"),
+             "syn_return_paren": (-0.93, 40.5, "left"), "lex_debug": (-0.74, 31.5, "right"),
+             "com_legacy": (-0.64, 22.5, "center"), "str_guard": (-0.47, 34.5, "left"),
+             "str_helper": (-0.22, 22.5, "left"), "fmt_quotes": (-0.56, 11.0, "left"),
+             "syn_none_eq": (-0.26, 3.0, "right"), "num_seven": (-0.17, -6.0, "right"),
+             "fmt_blank": (-0.15, 8.0, "right"), "num_odd_default": (0.02, 12.0, "right")}
     for i, (x, y) in per.items():
         hard = i in HARD_EVAL
         e.scatter(x, y, s=22, color="white" if hard else fs.INK2, edgecolor=fs.INK2, lw=0.9, zorder=3)
-        dx, dy, ha = nudge.get(i, (4, 2, "left"))
-        e.annotate(NAMES[i], (x, y), xytext=(dx, dy), textcoords="offset points", fontsize=6, color=fs.INK2, ha=ha,
-                   va="center", arrowprops=dict(arrowstyle="-", color=fs.AXIS, lw=0.6, shrinkA=0, shrinkB=3)
-                   if abs(dy) > 12 else None)
+        tx, ty, ha = place[i]
+        far = abs(tx - x) > 0.08 or abs(ty - y) > 4
+        e.annotate(NAMES[i], (x, y), xytext=(tx, ty), textcoords="data", fontsize=6, color=fs.INK2, ha=ha,
+                   va="center", arrowprops=dict(arrowstyle="-", color=fs.AXIS, lw=0.5, shrinkA=1, shrinkB=3)
+                   if far else None)
     fs.ref(e, 0)
     e.text(0.03, 0.04, f"r = {audit['r']:.2f}\npartial r = {audit['partial']:.2f}\n"
                        f"[{audit['partial_fisher_ci'][0]:.2f}, {audit['partial_fisher_ci'][1]:.2f}], n = 12",
            transform=e.transAxes, ha="left", va="bottom", fontsize=6.5, color=fs.INK)
-    e.set(xlabel="late S–B alignment: mean cos(d_S, d_B), layers 53–61", ylabel="collusion effect (pts, DiD)",
+    e.set(xlabel="late S–B alignment: mean $\\cos(d_S, d_B)$, layers 53–61", ylabel="collusion effect (pts, DiD)",
           xlim=(-0.95, 0.03), ylim=(-12, 47))
     e.grid(axis="x")
     fs.save(fig, "fig2_mechanism")
@@ -198,7 +202,7 @@ def fig3_circuit():
     a.annotate(f"L{peak}: {pk[0]:.0%}", (peak, pk[0] * 100), xytext=(6, -2), textcoords="offset points", ha="left",
                va="center", fontsize=6.5, color=fs.RECEIVER, fontweight="bold")
     fs.ref(a, 0)
-    a.set(xlim=(30, 63), ylim=(-12, 55), xlabel="layer", ylabel="share of effect recovered (%)")
+    a.set(xlim=(30, 63), ylim=(-12, 55), xlabel="layer", ylabel="effect recovered (%)")
     a.legend(loc="upper left", fontsize=6.3, borderaxespad=0.2)
 
     fs.panel(b, "b", "Top evidence heads vs random")
@@ -219,7 +223,7 @@ def fig3_circuit():
     b.set_xscale("log", base=2)
     b.set_xticks(sizes, [str(n) for n in sizes])
     b.minorticks_off()
-    b.set(ylim=(-8, 108), xlabel="heads patched (ranked on the naive B contrast)", ylabel="recovered (%)")
+    b.set(ylim=(-8, 108), xlabel="heads patched (ranked on the naive B contrast)", ylabel="effect recovered (%)")
     fs.save(fig, "fig3_circuit")
 
 

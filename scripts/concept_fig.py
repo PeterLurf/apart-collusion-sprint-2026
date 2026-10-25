@@ -89,7 +89,7 @@ def main():
     ax.text(x0 - 0.12, H - 0.08, "b", fontsize=8.5, fontweight="bold", va="top")
     ax.text(x0 + 0.06, H - 0.08, "Inside the monitor: collusion reuses its honest machinery", fontsize=8,
             fontweight="bold", va="top")
-    tx0, tx1, ty, th = x0 + 0.05, W - 0.55, 1.42, 0.24
+    tx0, tx1, ty, th = x0 + 0.05, W - 0.7, 1.42, 0.24
     lx = lambda L: tx0 + (tx1 - tx0) * L / 63
     box(ax, tx0, ty, tx1 - tx0, th, fc="#f6f5f1", ec=fs.AXIS, r=0.05)
     for a, b, col in ((21, 45, BIND), (47, 53, OVER)):
@@ -115,7 +115,7 @@ def main():
     ax.plot([lx(47), lx(47)], [ty + th, ty + th + 0.47], color=fs.AXIS, lw=0.6, zorder=0.5)
     ax.text(lx(47) + 0.04, ty + th + 0.47, "override", fontsize=6.4, fontweight="bold", color=fs.INK, ha="left",
             va="bottom")
-    ax.text(lx(47) + 0.04, ty + th + 0.45, "~20 honest-evidence heads write S\nas evidence of clean code", fontsize=6.2,
+    ax.text(lx(47) + 0.04, ty + th + 0.45, "~20 honest-evidence heads\nwrite S as evidence of\nclean code", fontsize=6.2,
             color=fs.INK2, ha="left", va="top", linespacing=1.15)
 
     # three findings
@@ -125,7 +125,7 @@ def main():
         ("Patch the heads", f"{top20[0]:.0%}",
          "of collusion undone by\npatching the top 20\nevidence heads; random\nsame-layer heads: ~0%", fs.NAIVE),
         ("Ablate a direction", "no clean\noff-switch",
-         "removing d_B stops\nhonest flagging too;\nremoving S's own part\nadds false alarms", fs.CONTROL),
+         "removing $d_B$ breaks\nhonest monitoring;\nremoving S's own part\nadds false alarms", fs.CONTROL),
         ("Read the decoder", f"{probe:.0%}",
          f"of attacks caught by a\nprobe on U, 5% audit\nbudget (U alone {U:.0%},\ntrusted T {T:.0%})", fs.RECEIVER),
     ]
