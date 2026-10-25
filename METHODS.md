@@ -115,7 +115,7 @@ Each entry gives the question, the method, and where the result comes from.
 - **Result:** the receiver's flag rate drops from 74% to 33%. Collusion effect: +31.4 points [+20.5, +41.9].
 - **Source:** `scripts/catchable_e0b1.py` → `data/catchable_e0b1.json`.
 
-### E1: Decoding is readable and transfers (§4.4, Figure C3)
+### E1: Decoding is readable and transfers (§4.4, Figure C1)
 
 - **Question:** is S linearly decodable in the receiver, beyond what the same model sees without the key, and does it transfer to codebook families the probe never saw?
 - **Method:** leave-one-family-out probes per layer (`modal_app/probes.py`). The layer is chosen by nested cross-validation, using inner folds only (`modal_app/nested.py`, `scripts/e1_nested.py`). Training drops every pair whose snippet also occurs in the held-out family (two carriers can produce the same code, e.g. `== None` at S = 0 and the None guard at S = 1). Controls:
