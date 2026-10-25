@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="472.32pt" height="184.32pt" viewBox="0 0 472.32 184.32" xmlns="http://www.w3.org/2000/svg" version="1.1">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="480.503121pt" height="184.32pt" viewBox="0 0 480.503121 184.32" xmlns="http://www.w3.org/2000/svg" version="1.1">
  <metadata>
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-10-25T02:26:53.627870</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -21,8 +22,8 @@
  <g id="figure_1">
   <g id="patch_1">
    <path d="M 0 184.32 
-L 472.32 184.32 
-L 472.32 0 
+L 480.503121 184.32 
+L 480.503121 0 
 L 0 0 
 z
 " style="fill: #ffffff"/>
@@ -258,7 +259,7 @@ z
 " clip-path="url(#pca9fe892b1)" style="fill: #52514e; stroke: #52514e; stroke-linecap: round"/>
    </g>
    <g id="text_23">
-    <text style="font-size: 6.3px; font-family: 'Arial'; text-anchor: start; fill: #52514e" x="447.84" y="64.91417" transform="rotate(-0 447.84 64.91417)">score</text>
+    <text style="font-size: 6.3px; font-family: 'Arial'; text-anchor: start; fill: #52514e" x="447.84" y="64.91417" transform="rotate(-0 447.84 64.91417)">suspicion</text>
    </g>
    <g id="text_24">
     <text style="font-weight: 700; font-size: 8px; font-family: 'Arial'; text-anchor: start; fill: #2a78d6" x="447.84" y="78.544219" transform="rotate(-0 447.84 78.544219)">↓ 0</text>
@@ -277,8 +278,8 @@ z
     <text style="font-weight: 700; font-size: 6.4px; font-family: 'Arial'; text-anchor: start; fill: #0b0b0b" x="381.325714" y="27.453125" transform="rotate(-0 381.325714 27.453125)">override</text>
    </g>
    <g id="text_29">
-    <text style="font-size: 6.2px; font-family: 'Arial'; fill: #52514e" transform="translate(381.325714 35.776013)">~20 honest-evidence heads</text>
-    <text style="font-size: 6.2px; font-family: 'Arial'; fill: #52514e" transform="translate(381.325714 42.495929)">write S as “clean”</text>
+    <text style="font-size: 6.2px; font-family: 'Arial'; fill: #52514e" transform="translate(381.325714 35.804591)">~20 honest-evidence heads write S</text>
+    <text style="font-size: 6.2px; font-family: 'Arial'; fill: #52514e" transform="translate(381.325714 42.497382)">as evidence of clean code</text>
    </g>
    <g id="text_30">
     <text style="font-weight: 700; font-size: 6.6px; font-family: 'Arial'; text-anchor: start; fill: #0b0b0b" x="226.8" y="117.84498" transform="rotate(-0 226.8 117.84498)">Patch the heads</text>

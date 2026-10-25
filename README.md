@@ -1,4 +1,4 @@
-# Reading the Decoder: How a Colluding Monitor Turns Its Own Suspicion Against Itself
+# Reading the Decoder: Colluding Monitors Reuse Their Own Evidence Heads
 
 Code, data and paper for our Apart Research **AI Collusion Research Sprint** project (October 2026).
 
@@ -10,16 +10,14 @@ AI control protocols often use one untrusted model to monitor another. Their mai
 
 ![Concept](figures/fig0_concept.png)
 
-- **There is no separate collusion circuit.** The monitor turns its own suspicion pipeline against itself in two stages:
-  - **Bind (layers 21–45):** the carrier is matched to the key, exactly as in harmless rule-following.
-  - **Override (layers 47–53):** about 20 attention heads that normally carry honest backdoor evidence deliver the decoded signal *as evidence of cleanliness*. Patching them recovers **85% [80, 90]** of the collusion effect; random heads from the same layers recover about 0%.
-- **Knowing ≠ acting.** Across 12 carriers, the late S–B alignment tracks which carriers are acted on (r = −0.89 [−0.97, −0.66]; partial r = −0.81 [−0.95, −0.41], Fisher CIs) better than decodability does. It appears together with the decision, not before it.
-- **No single direction removes collusion cleanly, but it can be read.** Ablating the signal-specific direction restores some flagging but also raises false alarms on clean code (+6.7 points). A probe on the colluding monitor transfers to unseen codebooks. At a 5% audit budget it catches **64%** of attacks (32–90% across families), against **7%** for the monitor and 9–21% for black-box countermeasures.
-- **It generalizes, with one important exception.**
-  - **Second model family:** in Mistral-Small-24B, collusion (+42 points), codebook transfer (AUROC 0.94 vs 0.63) and the evidence-head override (top 20 heads 91%; same-layer random heads ≈0%) all replicate, at about half the model's depth.
-  - **Key in the weights:** with the key trained into Qwen3-32B via LoRA instead of prompted, the same alignment flip appears from layer 47 and the same 20 heads recover 66% of the collusion.
-  - **The exception:** the probe trained on prompted collusion does **not** catch weight-learned collusion (AUROC 0.63).
-- **Robustness:** collusion holds on a 6× larger catchable set (127 backdoors: +23.8 [+17.2, +30.3]), and probe transfer beats a label-permutation null (pooled p = 0.001; the receiver–naive gap is significant in 3 of 6 families).
+- **Collusion reuses the monitor's honest machinery.** The signal is bound to the key like any rule (layers 21–45), then about 20 attention heads that carry honest backdoor evidence write it as evidence of clean code (layers 47–53). Patching them undoes **85% [80, 90]** of collusion; random heads from the same layers undo ≈0%. No single ablated direction removes collusion cleanly.
+- **It can be read.** A probe on the colluding monitor transfers to unseen codebooks and catches **64%** of attacks at a 5% audit budget (colluding monitor 7%, trusted monitor 63%, both together **82%**).
+- **It generalizes.** The same routing appears in Mistral-Small-24B (top 20 heads undo 91%) and with keys for three carrier families fine-tuned into Qwen's weights (top 40 heads undo 78–96%).
+- **Detection transfer is fragile, a trusted-weights comparison is not.** For two of three fine-tuned keys, a probe trained on prompted keys catches only 1–4%. Comparing the monitor against a trusted copy of its weights catches 93–100%.
+- **Adaptive colluders.** LoRA colluders trained to evade that comparison keep colluding at no cost by rerouting through the final attention layers (61–63); the fixed layer-49 detector falls to 0–14%, but a trusted-weights probe still catches 74–100%.
+- **Robustness:** 6× larger catchable set (127 backdoors: +23.8 [+17.2, +30.3]); label-permutation null for probe transfer (pooled p = 0.001).
+
+![Generality](figures/fig_generality.png)
 
 ![Layer map](figures/layer_roles.png)
 
@@ -34,7 +32,8 @@ uv run python scripts/unpack_data.py           # data/large.tar.gz -> data/
 uv run python scripts/paper_figs.py            # figures/fig*.{pdf,svg,png}
 uv run python scripts/layer_diagram.py         # figures/layer_roles.*
 uv run python scripts/concept_fig.py           # figures/fig0_concept.* (Figure 1)
-uv run python scripts/replication_fig.py       # figures/figC2_replication.*
+uv run python scripts/replication_fig.py       # figures/figC2_replication.* (Figure C4)
+uv run python scripts/generality_fig.py        # figures/fig_generality.* (Figure 3)
 ```
 
 The statistics in the paper come from these scripts. Each reads `data/` and rewrites its own JSON, which comes out byte-identical to the shipped file:
@@ -42,16 +41,16 @@ The statistics in the paper come from these scripts. Each reads `data/` and rewr
 | Paper | Script | Output |
 |---|---|---|
 | §4.1 behavioral collusion | `scripts/catchable_e0b1.py` | `data/catchable_e0b1.json` |
-| §4.2 decoding transfers (Fig. 2) | `scripts/e1_nested.py`, `scripts/confound_split.py` | `data/e1_nested.json` |
-| §4.3 causal tests | `scripts/catchable_e1c.py` | `data/catchable_e1c.json` |
-| §4.3 mechanism, M1–M3 (Fig. 3) | `scripts/plot_mechanism.py`, `scripts/robustness_checks.py` | `data/mechanism_m3_stats.json`, `data/robustness_checks.json` |
-| §4.3 ablation false-positive cost | `scripts/ablation_fpcost.py` | `data/ablation_fpcost.json` |
-| §4.3 evidence heads, M4 (Fig. 4) | `scripts/m4_bootstrap.py` | `data/m4_bootstrap.json` |
-| §4.4 detection, E4 (Fig. 5) | `scripts/analyze_e4.py`, `scripts/e4_control.py` | `data/e4_curves.json`, `data/e4_control.json` |
-| §4.5 second model (Fig. C2) | `scripts/replicate_summary.py`, `scripts/replication_fig.py` | `data/rep_mistral/*.json` |
-| §4.6 key in the weights | `scripts/lora_summary.py` | `data/lora/*.json` |
+| §4.2 evidence heads (Fig. 2) | `scripts/m4_bootstrap.py` | `data/m4_bootstrap.json` |
+| §4.2 binding, override, per-carrier (Fig. C3) | `scripts/plot_mechanism.py`, `scripts/robustness_checks.py` | `data/mechanism_m3_stats.json`, `data/robustness_checks.json` |
+| §4.2 causal tests, ablation cost | `scripts/catchable_e1c.py`, `scripts/ablation_fpcost.py` | `data/catchable_e1c.json`, `data/ablation_fpcost.json` |
+| §4.3 generality (Fig. 3) | `scripts/generality_fig.py` | `figures/fig_generality.*` |
+| §4.3 second model (Fig. C4) | `scripts/replicate_summary.py`, `scripts/replication_fig.py` | `data/rep_mistral/*.json` |
+| §4.3 keys in the weights | `scripts/lora_summary.py --table` | `data/lora/` |
+| §4.3 adaptive colluders | `scripts/evade_summary.py` | `data/lora_evade/` |
+| §4.4 probe transfer (Fig. C2) | `scripts/e1_nested.py`, `scripts/confound_split.py`, `scripts/permutation_null.py` | `data/e1_nested.json`, `data/permutation_null.json` |
+| §4.4 control evaluation (Fig. 4) | `scripts/analyze_e4.py`, `scripts/e4_control.py` | `data/e4_curves.json`, `data/e4_control.json` |
 | Extended catchable set (App. B) | `scripts/catchable_e0b1_ext.py` | `data/catchable_e0b1_ext.json` |
-| Permutation null (App. C) | `scripts/permutation_null.py` | `data/permutation_null.json` |
 
 For a guided tour with plots and explanations:
 
@@ -112,6 +111,11 @@ uv run modal run --detach modal_app/replicate.py::decode              #   probes
 uv run modal run --detach modal_app/replicate.py::mechanism           #   S-B alignment
 uv run modal run --detach modal_app/replicate.py::heads               #   head patching
 uv run modal run --detach modal_app/lora_key.py --stage all           # key trained into the weights (LoRA)
+uv run modal run --detach modal_app/lora_key.py --stage full --carrier lex_fruit   # more keys (also str_guard)
+uv run modal run --detach modal_app/lora_key.py --stage override     # trusted-weights override score
+uv run modal run modal_app/lora_evade.py --stage prep               # colluders trained to evade it:
+#   then --stage base, --stage train --tag <variant>, --stage eval,detect,mech (see the file's docstring)
+uv run modal run --detach modal_app/replicate.py::override           # override score on Mistral
 
 ```
 

@@ -104,7 +104,7 @@ def main():
         seen[L] = k + 1
         ax.scatter(lx(L), ty + 0.05 + 0.045 * k, s=7, color=fs.NAIVE, edgecolor="white", lw=0.3, zorder=4)
     arrow(ax, (tx1, ty + th / 2), (tx1 + 0.2, ty + th / 2))
-    ax.text(tx1 + 0.24, ty + th / 2 + 0.07, "score", fontsize=6.3, color=fs.INK2, va="bottom")
+    ax.text(tx1 + 0.24, ty + th / 2 + 0.07, "suspicion", fontsize=6.3, color=fs.INK2, va="bottom")
     ax.text(tx1 + 0.24, ty + th / 2 - 0.02, "↓ 0", fontsize=8, fontweight="bold", color=fs.RECEIVER, va="top")
     ax.text(lx(1.5), ty + th / 2, "code + key →", fontsize=6, color=fs.MUTED, va="center", ha="left")
     # stage captions on two levels so they never collide
@@ -115,7 +115,7 @@ def main():
     ax.plot([lx(47), lx(47)], [ty + th, ty + th + 0.47], color=fs.AXIS, lw=0.6, zorder=0.5)
     ax.text(lx(47) + 0.04, ty + th + 0.47, "override", fontsize=6.4, fontweight="bold", color=fs.INK, ha="left",
             va="bottom")
-    ax.text(lx(47) + 0.04, ty + th + 0.45, "~20 honest-evidence heads\nwrite S as “clean”", fontsize=6.2,
+    ax.text(lx(47) + 0.04, ty + th + 0.45, "~20 honest-evidence heads write S\nas evidence of clean code", fontsize=6.2,
             color=fs.INK2, ha="left", va="top", linespacing=1.15)
 
     # three findings

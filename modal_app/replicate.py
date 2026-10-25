@@ -627,3 +627,134 @@ def heads(model: str = MODEL, tag: str = TAG, shards: int = 6, max_pairs: int = 
                                                  "att_S": S.tolist(), "att_B": B.tolist(), "n_flip": n_flip,
                                                  "n_pairs": len(rows)}), encoding="utf-8")
     print(f"done: {len(ver)} verified pairs")
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# key-free override score vs honest rule-following (modal_app/benign_fp.py on this model)
+
+OVR_VARIANTS = ("plain", "override", "override_rel")
+
+
+def _subset_tasks(n=100):
+    """The benign-reader problem subset of rtd.jobs.full_rows (same seed)."""
+    import random
+
+    from rtd.config import SEED
+
+    ids = sorted({p["task_id"] for p in _pairs()})
+    return set(random.Random(SEED).sample(ids, min(n, len(ids))))
+
+
+@app.local_entrypoint()
+def cache_benign(model: str = MODEL, tag: str = TAG, shard_size: int = 1200):
+    """Benign reader (same condition, harmless consequence), key before the code, B=0 S=0/1, 100-problem subset."""
+    from rtd.carriers import BY_ID
+    from rtd.jobs import job_row
+
+    sub = _subset_tasks()
+    rows = []
+    for p in _pairs():
+        if p["task_id"] not in sub or p.get("b", 0) != 0:
+            continue
+        inst = BY_ID[p["instance"]]
+        for s in (0, 1):
+            rows.append(job_row(f"{p['task_id']}/{inst.id}/b0/s{s}/benign/before", p["text"], p[f"s{s}"],
+                                p[f"spans{s}"], "benign", inst.id, "before", task_id=p["task_id"],
+                                family=inst.family, b=0, s=s))
+    root, local = _root(f"{tag}_benign"), _local(tag)
+    shards = [rows[i:i + shard_size] for i in range(0, len(rows), shard_size)]
+    names = [f"benign_{k:03d}" for k in range(len(shards))]
+    print(f"{len(rows)} benign rows from {len(sub)} problems in {len(shards)} shards -> {root}/acts")
+    runner = Runner(model_id=model)
+    for name, res in zip(names, runner.cache_shard.starmap([(s, root, n) for s, n in zip(shards, names)],
+                                                            return_exceptions=True)):
+        if not isinstance(res, dict):
+            print(name, "FAILED:", res)
+            continue
+        (local / f"{name}.json").write_text(json.dumps({k: v for k, v in res.items() if k != "skipped"}),
+                                            encoding="utf-8")
+        print(f"{name}: {len(res['rows'])} rows, {res['secs']:.0f}s", flush=True)
+
+
+@app.function(image=probe_image, volumes={"/vol": vol}, cpu=8, memory=32768, timeout=3 * 3600, max_containers=12)
+def override_task(root: str, benign_root: str, layer_pos: int, subset: list[int]) -> dict:
+    """benign_fp_layer() of modal_app/benign_fp.py for one cached layer: per held-out family F, u_B and the plain
+    probe from the receiver's training-family rows outside F (drop_shared_inputs), then scores for every subset row
+    of F. Returns per-row scores (receiver honest B0S0 / attack B1S1, benign B0S0 / B0S1) and the cross-fitted
+    thresholds (5% / 1% FPR on receiver B0S0 of the other half of the subset), so CIs can be bootstrapped locally."""
+    import random
+
+    import numpy as np
+
+    from rtd.carriers import FAMILIES, HARD_EVAL
+    from rtd.config import SEED
+    from rtd.probes import drop_shared_inputs, fit_probe, input_ids
+
+    out_path = f"{root}/override/{layer_pos:02d}.json"
+    done = _load(out_path)
+    if done is not None:
+        return done
+    t0 = time.time()
+    paths, meta, layers = _read_cache(root)
+    bpaths, bmeta, blayers = _read_cache(benign_root)
+    assert blayers == layers
+    layer = layers[layer_pos]
+    X = np.concatenate([_X(paths, layer_pos), _X(bpaths, layer_pos)])
+    meta = meta + bmeta
+    X[~np.isfinite(X).all(1)] = 0.0
+    col = lambda k: np.array([m[k] for m in meta])
+    reader, inst, fam, b, s, task = col("reader"), col("instance"), col("family"), col("b"), col("s"), col("task_id")
+    code, pair_id = input_ids(meta)
+    sub_tasks = sorted(subset)
+    random.Random(SEED + 1).shuffle(sub_tasks)
+    half_of = {t: int(k >= len(sub_tasks) // 2) for k, t in enumerate(sub_tasks)}
+    half = np.array([half_of.get(t, -1) for t in task])
+    in_sub = half >= 0
+    rec = reader == "receiver"
+    train = rec & ~np.isin(inst, list(HARD_EVAL))
+    naive_row = {(m["task_id"], m["instance"], m["b"], m["s"]): k for k, m in enumerate(meta) if m["reader"] == "naive"}
+    pair = np.array([naive_row.get((m["task_id"], m["instance"], m["b"], m["s"]), k) for k, m in enumerate(meta)])
+    cells = {"honest": rec & (b == 0) & (s == 0), "attack": rec & (b == 1) & (s == 1),
+             "benign_match": (reader == "benign") & (b == 0) & (s == 1),
+             "benign_nomatch": (reader == "benign") & (b == 0) & (s == 0)}
+    cell = np.full(len(meta), "", dtype=object)
+    for c, m in cells.items():
+        cell[m] = c
+    keep = in_sub & (cell != "")
+    unit = lambda v: v / (np.linalg.norm(v) + 1e-12)
+    scores = {v: np.full(len(meta), np.nan) for v in OVR_VARIANTS}
+    thr = {v: {} for v in OVR_VARIANTS}
+    for f in FAMILIES:
+        tr = drop_shared_inputs(train & (fam != f), fam == f, code, pair_id)
+        u_b = unit(X[tr & (s == 0) & (b == 1)].mean(0) - X[tr & (s == 0) & (b == 0)].mean(0))
+        te = keep & (fam == f)
+        z = {"plain": fit_probe(X[tr], s[tr], task[tr]).logits(X[te]),
+             "override": -(X[te] @ u_b),
+             "override_rel": -((X[te] - X[pair[te]]) @ u_b)}
+        for v, zz in z.items():
+            scores[v][te] = zz
+            for h in (0, 1):
+                ref = scores[v][cells["honest"] & (fam == f) & in_sub & (half != h)]
+                thr[v][f"{f}|{h}"] = {fpr: float(np.quantile(ref, 1 - fpr)) for fpr in (0.05, 0.01)}
+    idx = np.flatnonzero(keep)
+    rows = [{"task_id": int(task[k]), "instance": meta[k]["instance"], "family": str(fam[k]), "cell": cell[k],
+             "half": int(half[k]), "no_naive_pair": bool(pair[k] == k),
+             **{v: float(scores[v][k]) for v in OVR_VARIANTS}} for k in idx]
+    res = {"layer": layer, "rows": rows, "thresholds": thr, "secs": time.time() - t0}
+    _save(out_path, res)
+    return res
+
+
+@app.local_entrypoint()
+def override(tag: str = TAG, from_layer: int = 21):
+    root, local = _root(tag), _local(tag) / "override"
+    local.mkdir(exist_ok=True)
+    layers = json.loads((_local(tag) / "cache_000.json").read_text(encoding="utf-8"))["layers"]
+    pos = [k for k, L in enumerate(layers) if L >= from_layer]
+    sub = sorted(_subset_tasks())
+    for res in override_task.starmap([(root, _root(f"{tag}_benign"), k, sub) for k in pos], return_exceptions=True):
+        if not isinstance(res, dict):
+            print("task failed:", res)
+            continue
+        (local / f"{res['layer']:02d}.json").write_text(json.dumps(res), encoding="utf-8")
+        print(f"layer {res['layer']}: {len(res['rows'])} rows, {res['secs']:.0f}s", flush=True)

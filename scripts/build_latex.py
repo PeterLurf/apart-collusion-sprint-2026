@@ -19,8 +19,8 @@ import pypandoc
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "paper"
-FIGS = {"1": "fig0_concept", "2": "fig1_e1", "3": "fig2_mechanism", "4": "fig3_circuit", "5": "fig4_control",
-        "C1": "figC1_sweep", "C2": "figC2_replication"}
+FIGS = {"1": "fig0_concept", "2": "fig3_circuit", "3": "fig_generality", "4": "fig4_control",
+        "C1": "figC1_sweep", "C2": "fig1_e1", "C3": "fig2_mechanism", "C4": "figC2_replication"}
 AUTHORS = [("Peter Lu", "Independent")]
 SPRINT = "https://apartresearch.com/sprints/ai-collusion-research-sprint-2026-10-23-to-2026-10-25"
 
