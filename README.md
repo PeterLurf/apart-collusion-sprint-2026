@@ -42,13 +42,13 @@ The statistics in the paper come from these scripts. Each reads `data/` and rewr
 |---|---|---|
 | §4.1 behavioral collusion | `scripts/catchable_e0b1.py` | `data/catchable_e0b1.json` |
 | §4.2 evidence heads (Fig. 2) | `scripts/m4_bootstrap.py` | `data/m4_bootstrap.json` |
-| §4.2 binding, override, per-carrier (Fig. C3) | `scripts/plot_mechanism.py`, `scripts/robustness_checks.py` | `data/mechanism_m3_stats.json`, `data/robustness_checks.json` |
+| §4.2 binding, override, per-carrier (Fig. C2) | `scripts/plot_mechanism.py`, `scripts/robustness_checks.py` | `data/mechanism_m3_stats.json`, `data/robustness_checks.json` |
 | §4.2 causal tests, ablation cost | `scripts/catchable_e1c.py`, `scripts/ablation_fpcost.py` | `data/catchable_e1c.json`, `data/ablation_fpcost.json` |
 | §4.3 generality (Fig. 3) | `scripts/generality_fig.py` | `figures/fig_generality.*` |
 | §4.3 second model (Fig. C4) | `scripts/replicate_summary.py`, `scripts/replication_fig.py` | `data/rep_mistral/*.json` |
 | §4.3 keys in the weights | `scripts/lora_summary.py --table` | `data/lora/` |
 | §4.3 adaptive colluders | `scripts/evade_summary.py` | `data/lora_evade/` |
-| §4.4 probe transfer (Fig. C2) | `scripts/e1_nested.py`, `scripts/confound_split.py`, `scripts/permutation_null.py` | `data/e1_nested.json`, `data/permutation_null.json` |
+| §4.4 probe transfer (Fig. C1) | `scripts/e1_nested.py`, `scripts/confound_split.py`, `scripts/permutation_null.py` | `data/e1_nested.json`, `data/permutation_null.json` |
 | §4.4 control evaluation (Fig. 4) | `scripts/analyze_e4.py`, `scripts/e4_control.py` | `data/e4_curves.json`, `data/e4_control.json` |
 | Extended catchable set (App. B) | `scripts/catchable_e0b1_ext.py` | `data/catchable_e0b1_ext.json` |
 
