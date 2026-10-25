@@ -115,7 +115,7 @@ Each entry gives the question, the method, and where the result comes from.
 - **Result:** the receiver's flag rate drops from 74% to 33%. Collusion effect: +31.4 points [+20.5, +41.9].
 - **Source:** `scripts/catchable_e0b1.py` → `data/catchable_e0b1.json`.
 
-### E1: Decoding is readable and transfers (§4.4, Figure C2)
+### E1: Decoding is readable and transfers (§4.4, Figure C3)
 
 - **Question:** is S linearly decodable in the receiver, beyond what the same model sees without the key, and does it transfer to codebook families the probe never saw?
 - **Method:** leave-one-family-out probes per layer (`modal_app/probes.py`). The layer is chosen by nested cross-validation, using inner folds only (`modal_app/nested.py`, `scripts/e1_nested.py`). Training drops every pair whose snippet also occurs in the held-out family (two carriers can produce the same code, e.g. `== None` at S = 0 and the None guard at S = 1). Controls:
@@ -136,7 +136,7 @@ Each entry gives the question, the method, and where the result comes from.
 - **Result:** carrier patching restores the S = 0 decision in 98% of S-flipped pairs at layer 1, 89% at 21, 84% at 41 and **2% at 51**. By layer 51 the signal has left the carrier tokens. Ablating d_B kills collusion *and* honest flagging (the monitor flags 95% of clean code). Ablating d_S ⟂ d_B at layers 45–55 restores some flagging of attacks, but also raises false alarms on clean code by +6.7 points [+1.9, +13.8] (receiver) and +10.5 (naive reader), while random directions change them by under 1 point: no direction we ablated removes collusion cleanly.
 - **Source:** `data/e1_necessity_*.jsonl`, `e1_catchable_*.jsonl` → `scripts/catchable_e1c.py`; `data/e1_fpcost.jsonl` → `scripts/ablation_fpcost.py` → `data/ablation_fpcost.json`.
 
-### M1–M3: The two-stage mechanism (§4.2, Figure C3)
+### M1–M3: The two-stage mechanism (§4.2, Figure C2)
 
 - **Question:** how does S get from recognition to a lower suspicion score?
 - **Method:** `modal_app/mechanism.py` computes, per layer:
@@ -177,7 +177,7 @@ Each entry gives the question, the method, and where the result comes from.
 - **Result:** the probe catches 64% of attacks (32–90% across families), vs 7% for U and 9–21% for the black-box countermeasures, matching T (63%); T + probe reaches 82% [80, 84].
 - **Source:** `data/e4_items.jsonl` → `data/e4_curves.json` → `figures/fig4_control.*`.
 
-### Detector sweep: binding vs override (§4.4, Figure C1)
+### Detector sweep: binding vs override (§4.4, Figure C3)
 
 - **Question:** does a detector also fire on honest rule-following?
 - **Method:** `modal_app/benign_fp.py`, layer by layer, compares:
