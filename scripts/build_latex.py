@@ -19,7 +19,8 @@ import pypandoc
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "paper"
-FIGS = {"1": "fig1_e1", "2": "fig2_mechanism", "3": "fig3_circuit", "4": "fig4_control", "C1": "figC1_sweep"}
+FIGS = {"1": "fig0_concept", "2": "fig1_e1", "3": "fig2_mechanism", "4": "fig3_circuit", "5": "fig4_control",
+        "C1": "figC1_sweep", "C2": "figC2_replication"}
 AUTHORS = [("Peter Lu", "Independent")]
 SPRINT = "https://apartresearch.com/sprints/ai-collusion-research-sprint-2026-10-23-to-2026-10-25"
 
@@ -99,6 +100,20 @@ def figures(tex: str) -> str:
     return re.sub(pat, repl, tex, flags=re.S)
 
 
+def unbreakable_short_tables(tex: str, max_rows: int = 8) -> str:
+    """Pandoc emits every table as a longtable, which may split across pages and repeat its header on the next one.
+    Short main-text tables become a plain tabular that moves as a block."""
+    def repl(m):
+        spec, body = m.group(1), m.group(2)
+        head, _, rows = body.partition("\\endlastfoot\n")
+        if rows.count("\\\\") > max_rows:
+            return m.group(0)
+        head = head.replace("\\endhead\n", "").replace("\\bottomrule\\noalign{}\n", "")
+        return (f"\\begin{{center}}\\small\n\\begin{{tabular}}{{{spec}}}\n{head}{rows}\\bottomrule\\noalign{{}}\n"
+                f"\\end{{tabular}}\n\\end{{center}}")
+    return re.sub(r"\\begin\{longtable\}\[\]\{(.*?)\}\n(.*?)\\end\{longtable\}", repl, tex, flags=re.S)
+
+
 def placeholders(tex: str) -> str:
     # pandoc writes "[" as {[} and "]" as {]}; author-facing placeholders are bracketed non-numeric text
     def repl(m):
@@ -123,7 +138,7 @@ def main():
     apps_md = re.sub(r"(?m)^## Appendix [A-Z]\. ", "## ", apps_md)
 
     unnumbered = lambda t: re.sub(r"\\section\{", r"\\section*{", t)
-    tex_main = figures(to_latex(main_md))
+    tex_main = unbreakable_short_tables(figures(to_latex(main_md)))
     tex_code = unnumbered(to_latex(code_md))
     tex_refs = unnumbered(to_latex(refs_md)).replace("\\begin{itemize}", "\\begin{itemize}\\small\\raggedright")
     tex_apps = figures(to_latex(apps_md))

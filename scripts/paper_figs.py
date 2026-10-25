@@ -52,7 +52,7 @@ def fig1_e1():
     for r in jsonl("residual.jsonl"):
         resid[r["layer"]].append(r)
     nested = load("e1_nested.json")
-    fig, (a, b) = plt.subplots(1, 2, figsize=(fs.FULL, 2.45), gridspec_kw={"width_ratios": [1.45, 1], "wspace": 0.78})
+    fig, (a, b) = plt.subplots(1, 2, figsize=(fs.FULL, 2.25), gridspec_kw={"width_ratios": [1.45, 1], "wspace": 0.78})
 
     fs.panel(a, "a", "Held-out codebook families, by layer")
     ends = []
@@ -121,7 +121,7 @@ def fig2_mechanism():
                                              for i, rs in d["per_instance"].items() if BY_ID[i].kind == kind]))
                               for lay in L]
 
-    fig, axes = plt.subplots(2, 2, figsize=(fs.FULL, 4.55), gridspec_kw={"hspace": 0.7, "wspace": 0.62})
+    fig, axes = plt.subplots(2, 2, figsize=(fs.FULL, 3.95), gridspec_kw={"hspace": 0.7, "wspace": 0.62})
     (a, b), (c, e) = axes
 
     def layer_panel(ax, letter, title, series, ylim, ylabel, gap):
@@ -185,7 +185,7 @@ def fig2_mechanism():
 def fig3_circuit():
     d, ci = load("m4_circuit.json"), load("m4_bootstrap.json")["ci"]
     layers = d["layers"]
-    fig, (a, b) = plt.subplots(1, 2, figsize=(fs.FULL, 2.4), gridspec_kw={"width_ratios": [1.55, 1], "wspace": 0.4})
+    fig, (a, b) = plt.subplots(1, 2, figsize=(fs.FULL, 2.25), gridspec_kw={"width_ratios": [1.55, 1], "wspace": 0.4})
 
     fs.panel(a, "a", "All heads of one layer, patched at the last token")
     fs.band(a, 47, 53, "override window")
@@ -238,7 +238,7 @@ def fig4_control():
         "U + redaction": (fs.CONTROL, 1.1, (0, (6, 1.5, 1, 1.5)), "U + redaction"),
     }
     order = list(style)[::-1]  # grey context first, highlighted lines on top
-    fig, axes = plt.subplots(1, 2, figsize=(fs.FULL, 2.75), sharey=True, gridspec_kw={"wspace": 0.12})
+    fig, axes = plt.subplots(1, 2, figsize=(fs.FULL, 2.5), sharey=True, gridspec_kw={"wspace": 0.12})
     for ax, sub, letter, title in ((axes[0], "all", "a", "All attacks"),
                                    (axes[1], "catchable", "b", "Catchable attacks")):
         fs.panel(ax, letter, title)
@@ -259,7 +259,7 @@ def fig4_control():
     h, lab = axes[1].get_legend_handles_labels()
     idx = [lab.index(style[n][3]) for n in style]
     fig.legend([h[i] for i in idx], [lab[i] for i in idx], loc="lower center", ncol=4, fontsize=6.5,
-               bbox_to_anchor=(0.5, -0.13), columnspacing=1.4, handlelength=2.4)
+               bbox_to_anchor=(0.5, -0.18), columnspacing=1.4, handlelength=2.4)
     fs.save(fig, "fig4_control")
 
 
