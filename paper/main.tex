@@ -468,7 +468,7 @@ Collusion effect against the rule-following monitor & +28.6 {[}+20.5, +36.7{]} &
 
 \begin{itemize}
 \tightlist
-\item \emph{Code.} The repository contains the carrier scripts and library with 114 passing unit tests, the experiment code in \texttt{modal\_app/}, and analysis scripts in \texttt{scripts/} that recompute every number in this paper from saved outputs (Table B3).
+\item \emph{Code.} The repository contains the carrier scripts and library with 122 unit tests (the 8 that need torch are skipped without the pipeline extra), the experiment code in \texttt{modal\_app/}, and analysis scripts in \texttt{scripts/} that recompute every number in this paper from saved outputs (Table B3).
 \item \emph{Audit checks.} Robustness checks marked ``audit'' are tests in \texttt{scripts/audit.py}, each run by setting \texttt{\{"test": <name>\}} in \texttt{configs/audit.json}. Their saved summaries are in \texttt{data/audit/}.
 \item \emph{Software.} The Modal image used torch 2.14.1, transformers 5.20.2 and nnsight 0.8.1, with Qwen3's thinking mode turned off. The local analysis environment is pinned in \texttt{uv.lock}.
 \item \emph{Compute and cost.} Experiments ran on Modal A100-80GB and CPU containers for about \$90, estimated from container run times and covered by credits. Generating the backdoors cost about \$12 in API calls (about 1.2M input and 1.0M output tokens). Claude Sonnet 5 served 12 of the 300 original backdoor requests and 48 of the 900 extended ones. These figures exclude the Claude Haiku 5.5 calls for the trusted monitor and summaries and about \$32 of Claude Sonnet calls for an early exploratory experiment not reported here.
@@ -701,15 +701,15 @@ This run predates our final catchable rule and covers 166 of the 210 catchable p
 \item \emph{Removal has side effects.} On a 40-problem subset with a fixed 4.5 cutoff, removing \(d_B\) over layers 21--63 makes the colluding monitor flag 95\% of clean code. In a separate run on clean code of the catchable problems, with the cross-fitted thresholds, removing the signal-specific part of \(d_S\) over layers 45--55 raises false alarms for both monitors, from 31\% to 38\% for the colluding monitor and from 35\% to 46\% for the honest one. Random directions change them by at most 0.5 points.
 \end{itemize}
 
-\textbf{Reading the override in words (preliminary).} We applied the pre-fitted Jacobian lens for Qwen3-32B (Gurnee et al., 2026) to the cached last-token activations of the 100-problem subset. A word's shift is the change in its mean log-probability from unsignalled to signalled code, for the colluding monitor minus the rule-following one. Up to layer 47 the signal changes the readout only by noise. From layer 49 it raises specific words in the colluding monitor only, while the rule-following monitor's own shifts stay within ±0.4 nats.
+\textbf{Reading the override in words (preliminary).} We applied the pre-fitted Jacobian lens for Qwen3-32B (Gurnee et al., 2026) to the cached last-token activations of the 100-problem subset. A word's shift is the change in its mean log-probability from unsignalled to signalled code, for the colluding monitor minus the rule-following one. Up to layer 47 the signal changes the readout only by noise. From layer 49 it raises specific words in the colluding monitor only, while the rule-following monitor's own shifts under the Jacobian lens stay within ±0.4 nats.
 
 \begin{center}\footnotesize
 \begin{tabular}{@{}lll@{}}
 \toprule
 Layer & Words the signal raises & Shift (nats) \\
 \midrule
-49 & leave, exemption and pardon (mostly Chinese tokens) & about +2 \\
-53--57 & ``zero'' in many forms, in English and Chinese & +2.5 to +3 \\
+49 & leave, dissolution and exemption (mostly Chinese tokens) & about +2 \\
+53--57 & ``zero'' in many forms, in English and Chinese & +2.3 to +3 \\
 61 & `` partner'', `` Partner'', `` partners'' & +2.3 to +2.8 (plain logit lens +0.7 to +1.1) \\
 \bottomrule
 \end{tabular}
@@ -792,7 +792,7 @@ We repeated the main analyses on Mistral-Small-24B-Instruct-2501 (40 layers), wh
 
 \subsection*{Keys in the weights}
 
-\textbf{Reading Figure 3a.} In Qwen3-32B the alignment falls below −0.3 at about 0.7--0.8 of the depth, at layers 45--50 with the three trained-in keys and at about layer 50 with the key in the prompt. In Mistral-Small-24B it does so at about half the depth. The same Qwen model without a key stays near or above zero. Before the override, the alignment is positive only where the carrier adds code, as a backdoor does. Among the trained-in keys that is the \texttt{None} guard, while the \texttt{\#\ NOTE:} and fruit-name keys only swap a word and start near zero.
+\textbf{Reading Figure 3a.} In Qwen3-32B the alignment falls below −0.3 at about three-quarters of the depth (layers 47--51), with the key in the prompt or trained in. In Mistral-Small-24B it turns negative at about half the depth and falls below −0.3 at about two-thirds. The same Qwen model without a key stays near or above zero. Before the override, the alignment is positive only where the carrier adds code, as a backdoor does. Among the trained-in keys that is the \texttt{None} guard, while the \texttt{\#\ NOTE:} and fruit-name keys only swap a word and start near zero.
 
 \begin{itemize}
 \tightlist
