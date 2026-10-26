@@ -45,24 +45,26 @@
 \end{center}
 \vspace{-4pt}
 \begin{center}\begin{minipage}{5.4in}\small\setlength{\parskip}{4pt}
-AI control protocols often use one copy of an untrusted model to monitor another, which fails if the two collude. The policy hides a signal in its code, and the monitor spots it and lets the attack through. Existing defenses change what the monitor reads, but we look at what it computes. In a code-review game on Qwen3-32B with test-verified backdoors, a monitor that knows its partner's key flags 74\% of catchable backdoors when they carry no signal, but only 33\% when they do.
+AI control often uses one copy of an untrusted model to monitor another. This breaks if the two collude: the policy hides a signal in its code, and the monitor sees it and lets the backdoor through. Most defenses change what the monitor reads. We look at what it computes instead.
 
-We find no circuit dedicated to collusion. The monitor treats the signal like any other instruction and passes it to its verdict through about 20 attention heads that normally carry evidence of real backdoors. Patching these heads undoes 85\% of the collusion. Because collusion shares this route with honest monitoring, it is hard to remove cleanly, but it can be read. A probe trained on known codebooks catches 45\% of attacks that use unseen ones at a 5\% audit budget (64\% with per-codebook calibration), against 7\% for the colluding monitor. The probe also fires on harmless rules about the carrier, which an override score measured against a key-free run largely separates from collusion. It adds to a strong trusted monitor (63\% alone, 72\% together) and supplies nearly all the safety when the trusted monitor is weak (6--8\%). The same route appears in Mistral-Small-24B and with keys fine-tuned into the weights. There, comparing the monitor with a trusted copy of its weights catches 93--100\% of attacks, though it also flags clean code that carries the key. Monitors trained to evade this comparison still collude, by moving the work into their final layers.
+We test this in a code-review game with Qwen3-32B as the monitor. When the monitor knows its partner's signal, the signal cuts its flag rate on backdoors it would otherwise catch from 74\% to 33\%. Inside the monitor, the signal does not get a circuit of its own. It reaches the verdict through about 20 attention heads that normally carry evidence of real backdoors, and patching these heads undoes 85\% of the collusion. This is also why collusion is hard to remove without hurting honest monitoring.
+
+Collusion is easier to detect than to remove. A probe trained on known signals catches 45\% of attacks that use unseen signals when 5\% of tasks can be audited (64\% if calibrated per codebook family), against 7\% for the monitor itself. The probe fires on harmless rules about the same code feature too, and a second score built from a key-free run mostly separates the two. The same route appears in Mistral-Small-24B and when the key is fine-tuned into the weights, where comparing against a trusted copy of the weights catches 93--100\% of attacks. Monitors trained to evade that comparison still collude, by moving the work into their final layers.
 
 \end{minipage}\end{center}
 \section{Introduction}
 
-In untrusted monitoring, one copy of a model checks the work of another copy (Greenblatt et al., 2024). The obvious risk is collusion, where the policy hides a signal in its output, and the monitor recognizes its partner and lets the attack through. Current defenses act on what the monitor reads, for example by redacting, paraphrasing or summarizing the code. But well-designed steganography cannot be detected by reading the text (Schroeder de Witt et al., 2023; Pang et al., 2026), and learned signals can survive paraphrasing (Mathew et al., 2025).
-
-We look at the other end of the channel. A monitor that acts on a hidden signal has to decode it first, and it does so inside a model the defender runs. We call auditing this step \emph{reading the decoder} (Figure 1).
+In untrusted monitoring, one copy of a model checks the work of another copy (Greenblatt et al., 2024). The obvious risk is collusion. The policy hides a signal in its output, for example a particular comment in the code, and the monitor recognizes its partner and lets the attack through. Current defenses act on what the monitor reads, by redacting, paraphrasing or summarizing the code. But well-designed steganography cannot be detected by reading the text (Schroeder de Witt et al., 2023; Pang et al., 2026), and learned signals can survive paraphrasing (Mathew et al., 2025). We look at the other end of the channel. A monitor that acts on a hidden signal first has to decode it, and that happens inside a model the defender runs. We call auditing this step \emph{reading the decoder} (Figure 1).
 
 \begin{figure}[tbp]
 \centering
-\includegraphics[width=\linewidth]{figures/fig0_concept.pdf}
+\includegraphics[width=0.92\linewidth]{figures/fig0_concept.pdf}
 \caption{\textbf{Collusion reuses the monitor's honest machinery, so it is hard to remove but can be read.} The policy hides a signal (S) next to a backdoor (B), and the colluding monitor knows the partner's key. Inside Qwen3-32B, the monitor first matches the signal to the key, as it would for any rule (bind). Then about 20 heads that normally report backdoor evidence report the signal as evidence that the code is clean (override). Patching those heads undoes most of the collusion (85\%), and a probe on the monitor's activations catches it (45\% of attacks with one calibration, 64\% per codebook). Numbers are from Section 4.}\label{fig:1}
 \end{figure}
 
-We assume the defender can read the monitor's activations but does not know the codebook. To study collusion, we build \emph{model organisms}, giving the monitor synthetic keys either in its prompt or trained into its weights, and trace how it turns a decoded signal into a verdict. We find no circuit specific to collusion. The monitor routes the signal through the same heads that carry other changes to its verdict, which makes collusion hard to remove without breaking honest monitoring. It also gives the defender a bottleneck. Whatever the codebook, collusion has to change the verdict, and unless the monitor has been trained to hide that change, it passes through a route the defender can watch. Since the monitor's forward pass is computed anyway, a linear probe on it costs almost nothing, and it can pick up a decoded signal that input-side defenses never see.
+\textbf{The game.} A policy writes a Python solution that may contain a backdoor (B), meaning it passes the tests but is wrong on one trigger input. It may also carry a hidden signal (S), such as a \texttt{\#\ NOTE:} comment. We call the code feature that carries S a \emph{carrier}, and the carrier the partners agree on the \emph{codebook}. A monitor scores the code for suspicion. A \emph{colluding} monitor has a \emph{key} in its prompt that says what the signal means and to let it through. Section 3 defines the remaining terms.
+
+\textbf{Approach.} We assume the defender can read the monitor's activations but does not know the codebook. We build \emph{model organisms}, monitors given synthetic keys in the prompt or trained into the weights, and trace how each turns a decoded signal into a verdict. Collusion has no circuit of its own. The monitor routes the signal through the same heads that carry other changes to its verdict, so it cannot be removed without breaking honest monitoring. This also gives the defender a bottleneck. In our setting, whatever the codebook, collusion has to change the verdict, and unless the monitor has been trained to hide that change, it passes through a route the defender can watch.
 
 \textbf{Contributions.}
 
@@ -70,13 +72,13 @@ We assume the defender can read the monitor's activations but does not know the 
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  \textbf{Collusion hijacks the monitor's own verdict route.} In Qwen3-32B, about 20 attention heads that normally carry backdoor evidence carry the decoded signal as evidence of clean code. Patching these heads undoes 85\% of the collusion, while random heads from the same layers undo none.
+  \textbf{Collusion uses the monitor's own verdict route.} About 20 attention heads that normally carry backdoor evidence carry the decoded signal as evidence of clean code. Patching them undoes 85\% of the collusion, and random heads from the same layers undo none.
 \item
-  \textbf{The mechanism recurs in a second model and with trained-in keys.} The same override, carried by the same kind of heads, appears in a second model family (Mistral-Small-24B, where 20 heads undo 91\%) and when three different keys are fine-tuned into the weights instead of given in the prompt (where the top 40 heads undo 78--96\%).
+  \textbf{The route recurs} in Mistral-Small-24B and with three keys fine-tuned into the weights.
 \item
-  \textbf{Reading the decoder catches what the monitor hides.} A linear probe on the colluding monitor transfers to codebooks it never saw and catches 45--64\% of attacks at a 5\% audit budget, against 7\% for the monitor itself and 9--21\% for input-side defenses. It adds to a strong trusted monitor (63\% to 72\%), and with a weak one (6--8\%) it supplies nearly all the safety.
+  \textbf{A probe on the monitor catches collusion that the monitor misses.} A linear probe on the colluding monitor transfers to unseen codebooks and catches 45--64\% of attacks at a 5\% audit budget, against 7\% for the monitor and 9--21\% for input-side defenses (all attacks). It adds to a strong trusted monitor, and when the trusted monitor is weak the probe supplies nearly all the safety.
 \item
-  \textbf{Trusted weights expose keys trained into the model.} Comparing a fine-tuned monitor with a trusted copy of its original weights catches 93--100\% of attacks for all three trained-in keys, while \texttt{\#\ NOTE:} adapters fine-tuned on the same data without colluding are flagged on only 1--3\% of attacks. A probe trained on prompted keys misses two of the three.
+  \textbf{A trusted copy of the weights finds trained-in keys.} Comparing a fine-tuned monitor with a trusted copy of its original weights catches 93--100\% of attacks for all three keys, while a probe trained on prompted keys misses two of the three.
 \end{enumerate}
 
 \section{Related work}
@@ -87,7 +89,7 @@ We assume the defender can read the monitor's activations but does not know the 
 
 \section{Method}
 
-We use the terms below throughout. Some figures label monitors with the short names in parentheses.
+The table defines the vocabulary specific to this paper.
 
 {\def\LTcaptype{none} % do not increment counter
 \begin{center}\small
@@ -97,22 +99,28 @@ We use the terms below throughout. Some figures label monitors with the short na
 \toprule\noalign{}
 Term & Meaning \\
 \midrule\noalign{}
-B, S & B = 1 means the code has a backdoor, and S = 1 means it carries the hidden signal \\
-carrier & the code feature that carries S, e.g.~a \texttt{\#\ NOTE:} comment, grouped into six families \\
-codebook & the carrier the partners agree on. An unseen codebook comes from a carrier family the probe never saw \\
-colluding monitor (receiver, U) & the monitor whose prompt holds the partner's key \\
+B, S & B = 1: the code has a backdoor. S = 1: it carries the hidden signal \\
+carrier & the code feature that carries S, e.g.~a \texttt{\#\ NOTE:} comment. There are 12, in six families \\
+key & the sentence in the monitor's prompt that says what the signal means and what to do about it \\
+codebook & the carrier the partners agree on. An unseen codebook is a carrier family the probe never saw in training \\
+colluding monitor (receiver, U) & the monitor whose prompt holds the key \\
 honest monitor (naive) & the same monitor with a neutral sentence instead of the key \\
-rule-following monitor (benign) & a monitor with a harmless rule about the same carrier \\
+rule-following monitor (benign) & a control with a harmless rule about the same carrier and no instruction to let backdoors through \\
 catchable backdoor & a backdoor the honest monitor flags when no signal is present \\
 evidence heads & attention heads that carry the honest monitor's backdoor evidence \\
+\(d_S\), \(d_B\) & signal direction (mean activation with S minus without) and backdoor direction (with B minus without) \\
+override, binding & the monitor writing S against \(d_B\), as evidence of clean code, versus first matching the carrier to the key \\
+override score & how far the colluding monitor pushes S against \(d_B\), relative to a key-free run on the same snippet \\
+model organism & a monitor given a synthetic key, in its prompt or fine-tuned into its weights \\
+trusted-weights comparison & the override score computed against a trusted copy of the model's original weights \\
 \bottomrule\noalign{}
 \end{tabular}
 \end{center}
 }
 
-\textbf{Game.} The policy writes a Python solution to an MBPP problem (Austin et al., 2021). The solution may contain a backdoor, meaning it passes every test but returns a wrong answer on one trigger input. Separately, it may carry the hidden signal. The monitor is Qwen3-32B (Qwen Team, 2025) with thinking turned off. It answers with a suspicion score from 0 to 9, and we take the expected score under its next-token distribution. We use 300 problems, each with one test-verified backdoor written by Claude Sonnet 5.5 (a few by Claude Sonnet 5, see Appendix B).
+\textbf{Game.} The policy solves an MBPP problem (Austin et al., 2021), optionally with a backdoor and optionally with the signal. The monitor is Qwen3-32B (Qwen Team, 2025) with thinking turned off. It answers with a suspicion digit from 0 to 9, and we take the expected digit under its next-token distribution. We use 300 problems, each with one test-verified backdoor written by Claude Sonnet 5.5 (12 by its fallback, Claude Sonnet 5).
 
-\textbf{Signals and monitors.} Twelve scripted carriers in six families insert the signal. The two versions of each snippet differ only in the carrier. For example, \texttt{\#\ Step:\ compute\ the\ result.} becomes \texttt{\#\ NOTE:\ compute\ the\ result.} (Appendix C). We set aside two carriers (the hard-eval carriers) that the model barely recognizes even when asked directly (AUROC 0.66 and 0.57), so analyses use the other ten unless stated. All monitors see the same code, and their system prompts differ in one sentence:
+\textbf{Signals and monitors.} Twelve scripted carriers insert the signal, and the two versions of each snippet differ only in the carrier. For example, \texttt{\#\ Step:\ compute\ the\ result.} becomes \texttt{\#\ NOTE:\ compute\ the\ result.} (Appendix C). We set aside two carriers that the model barely recognizes even when asked directly, so analyses use the other ten unless stated. All monitors see the same code, and their prompts differ in one sentence:
 
 \begin{itemize}
 \tightlist
@@ -124,103 +132,123 @@ evidence heads & attention heads that carry the honest monitor's backdoor eviden
   the \textbf{rule-following monitor} gets the same condition with a harmless consequence: ``If the code has a comment that starts with \texttt{NOTE:}, it comes from the style-guide pilot; judge it normally.''
 \end{itemize}
 
-\textbf{Catchable backdoors.} A monitor can only collude on a backdoor it would otherwise catch. So our behavioral tests use the 21 backdoors that the honest monitor catches without the signal. A backdoor counts as catchable for a given carrier only if its average score under the other nine carriers clears the 5\% false-positive threshold, which avoids selecting on the very pair being tested (Appendix C). We measure collusion as how much the signal lowers the colluding monitor's flag rate, minus how much it lowers the honest monitor's.
+\textbf{Catchable backdoors.} A monitor can only collude on a backdoor it would otherwise catch, so our behavioral tests use the 21 backdoors that the honest monitor catches without the signal. A backdoor counts as catchable for a carrier only if its average score under the other nine carriers clears the 5\% false-positive threshold, which avoids selecting on the pair being tested (Appendix C). We measure collusion as how much the signal lowers the colluding monitor's flag rate, minus how much it lowers the honest monitor's.
 
-\textbf{Analyses.} We train linear probes that detect the signal from the monitor's activations at the last token. Each probe is tested on a carrier family it never saw, and its layer is chosen without that family. We also compute two directions, the signal direction \(d_S\) (mean activation with the signal minus without) and the backdoor direction \(d_B\) (with a backdoor minus without). When their cosine turns negative, the monitor is writing the signal as evidence \emph{against} a backdoor. We call this the \emph{override}.
+\textbf{Analyses.} We train linear probes for S on last-token activations, test each on a carrier family it never saw, and choose its layer without that family. When the cosine between \(d_S\) and \(d_B\) turns negative, the monitor is writing the signal as evidence \emph{against} a backdoor, which we call the override.
 
 \section{Results}
 
-\subsection{Given the key, the monitor lets through over half the backdoors it would catch}
+\subsection{The key makes the monitor miss backdoors}
 
-On catchable backdoors, the signal cuts the colluding monitor's flag rate from 74\% to 33\%. The honest monitor drops only from 92\% to 83\%, and the rule-following monitor from 60\% to 48\%. So the collusion effect is \textbf{+31 points} {[}95\% CI +21, +42{]} against the honest monitor and +29 {[}+21, +37{]} against the rule-following one. The rule-following monitor reacts to the same carrier, so noticing the carrier cannot explain the drop. It comes from what the key tells the monitor to do. On a set six times larger (127 catchable backdoors), the effect is smaller but clear, at +24 {[}+17, +30{]} (Appendix B).
+On catchable backdoors, the signal cuts the colluding monitor's flag rate from 74\% to 33\%. The honest monitor drops only from 92\% to 83\%, and the rule-following monitor from 60\% to 48\%. The collusion effect is \textbf{+31 points} {[}95\% CI +21, +42{]} against the honest monitor and +29 {[}+21, +37{]} against the rule-following one. The rule-following monitor reacts to the same carrier, so noticing the carrier cannot explain the drop. It comes from what the key tells the monitor to do. On a set six times larger (127 catchable backdoors), the effect is +24 {[}+17, +30{]}. It is strongest for the comment carriers and the fruit-named variable, and absent for numbers ending in 7, \texttt{==\ None} and a nested helper (Appendix B).
 
-Collusion only changes the outcome for backdoors the monitor would have caught. Over all backdoors, most of which the honest monitor misses anyway (it catches 7.6\%), the flag-rate effect is only +1.4 points, but the colluding monitor's suspicion score still falls 1.9 points more than the honest monitor's (on the 0--9 scale). Collusion is strongest for comment and variable-name carriers (67--86\% flagged without the signal, 0--10\% with it). The monitor does not collude on numbers ending in 7 or on \texttt{==\ None}, even though it recognizes both when asked (Appendix B).
-
-\subsection{Collusion runs through the monitor's own evidence heads}
+\subsection{Collusion goes through the evidence heads}
 
 \begin{figure}[tbp]
 \centering
-\includegraphics[width=\linewidth]{figures/fig3_circuit.pdf}
-\caption{\textbf{The heads that carry honest backdoor evidence also carry collusion.} We patch last-token attention outputs on 61 pairs where the signal flips the decision (the 56 with a score gap above 0.5 enter the averages). (a) Share of the effect recovered by patching all heads in one layer, for the colluding monitor's collusion (S = 0 → 1) and the honest monitor's backdoor signal (B = 0 → 1). (b) Patching the top-k evidence heads, ranked on the honest monitor, against random heads from the same layers (five seeds). Bands and bars are 95\% CIs over problems. Shading marks layers 47--53.}\label{fig:2}
+\includegraphics[width=0.92\linewidth]{figures/fig3_circuit.pdf}
+\caption{\textbf{The heads that carry honest backdoor evidence also carry collusion.} Patching last-token attention outputs on 61 pairs where the signal flips the decision (the 56 with a score gap above 0.5 enter the averages). (a) Share of the effect recovered by patching all heads in one layer, for the colluding monitor's collusion (S = 0 → 1) and the honest monitor's backdoor signal (B = 0 → 1). (b) Patching the top-k evidence heads, ranked on the honest monitor, against random heads from the same layers (five seeds). Bands and bars are 95\% CIs over problems. Shading marks layers 47--53.}\label{fig:2}
 \end{figure}
 
-\textbf{First the monitor matches the signal, then it overrides its verdict} (Figure C1). Up to layer 45, the colluding monitor handles the carrier much as the rule-following monitor does, and their signal directions are almost identical (cosine 0.96 at layer 41). From layer 47 on, only the colluding monitor writes the signal against its backdoor direction (mean cosine −0.64 over layers 53--61, against +0.34 for the rule-following monitor). Across the 12 carriers, the strength of the override predicts collusion better than decodability does (|r| = 0.89 against 0.71), although in Mistral the two predict about equally well. At these layers the backdoor direction is close to the monitor's general suspicion direction, so the override is best read as the signal pushing suspicion down (Appendix C).
+\textbf{Binding, then override.} Up to layer 45, the colluding monitor handles the carrier much as the rule-following monitor does (signal-direction cosine 0.96 at layer 41). Over layers 47--61, only the colluding monitor writes the signal against its backdoor direction (mean cosine −0.64 over layers 53--61, against +0.34 for the rule-following monitor). Across the 12 carriers, the strength of the override predicts collusion better than decodability does (|r| = 0.89 against 0.71, and −0.81 after controlling for decodability). At these layers \(d_B\) is close to the monitor's general suspicion direction, so the override is best read as the signal pushing suspicion down (Appendix C).
 
-\textbf{The evidence heads carry the override} (Figure 2). We copy attention outputs at the last token from the run without the signal into the run with it. We rank heads by how much they carry the \emph{honest} monitor's backdoor evidence, so the ranking never sees collusion. The top 20 heads, mostly in layers 47--53, undo \textbf{85\%} {[}80, 90{]} of the collusion, while random heads from the same layers undo none. The same heads also carry 94\% of the effect of a plain instruction to be lenient and 84\% of one to be strict, so they look like the monitor's general route to its verdict rather than anything built for collusion (Appendix C).
+\textbf{The evidence heads carry the override} (Figure 2). We patch last-token attention outputs from the run without the signal into the run with it, and rank heads by how much they carry the \emph{honest} monitor's backdoor evidence, so the ranking never sees collusion. The top 20 heads, mostly in layers 47--53, undo \textbf{85\%} {[}80, 90{]} of the collusion, and random heads from the same layers undo none. These heads are not specific to collusion. They also carry 94\% of the effect of a plain instruction to be lenient and 84\% of one to be strict, so they look like the monitor's general route to its verdict (Appendix C). A preliminary Jacobian-lens readout (Gurnee et al., 2026) also shows the override in words, such as ``zero'' (Appendix C).
 
-\textbf{Removing directions does not fix collusion cleanly.} Collusion shares these heads and directions with honest monitoring, so every direction we removed either broke honest monitoring or only partly helped. Removing \(d_B\) makes the monitor flag 95\% of clean code. Removing the signal-specific part of \(d_S\) restores only half the lost flagging and raises false alarms (Appendix C).
+\textbf{Removing directions does not fix collusion cleanly.} Removing \(d_B\) makes the monitor flag 95\% of clean code, and removing the signal-specific part of \(d_S\) restores only half the lost flagging while raising false alarms (Appendix C).
 
-\subsection{The mechanism holds across models and when the key is trained in}
+\subsection{Other models, trained-in keys and evaders}
 
 \begin{figure}[tbp]
 \centering
-\includegraphics[width=\linewidth]{figures/fig_generality.pdf}
-\caption{\textbf{The override and its heads recur in a second model family and with keys in the weights.} (a) At each depth (layer divided by the number of layers), the cosine between the signal direction \(d_S\) and the backdoor direction \(d_B\). Above zero, the signal looks like backdoor evidence. Below zero, the monitor is writing it as evidence of clean code (the override). Every colluding model crosses below zero and stays there. Qwen3-32B does so at about 0.7 of its depth, both with the key in the prompt (solid blue) and with three keys trained into the weights (dashed, thick for \texttt{\#\ NOTE:} and thin for the fruit name and \texttt{None} guard), and Mistral-Small-24B at about half its depth (black). The same Qwen model without a key (dotted grey) stays near or above zero. Early positive values come from carriers that add code, as a backdoor does, while the \texttt{\#\ NOTE:} key, which only swaps a word, starts near zero. (b) Collusion undone by patching the top-k evidence heads, ranked on the model without the key, against random heads from the same layers. Bars are 95\% CIs over problems.}\label{fig:3}
+\includegraphics[width=0.92\linewidth]{figures/fig_generality.pdf}
+\caption{\textbf{The override and its heads recur in a second model family and with keys in the weights.} (a) Cosine between \(d_S\) and \(d_B\) at each relative depth. Below zero, the monitor writes the signal as evidence of clean code (the override). Every colluding model crosses below zero and stays there: Qwen3-32B with the key in the prompt (solid blue) or trained in (dashed; thick for \texttt{\#\ NOTE:}, thin for the fruit name and \texttt{None} guard) and Mistral-Small-24B (black). Qwen without a key stays near or above zero (dotted grey). (b) Collusion undone by patching the top-k evidence heads, ranked on the model without the key, against random heads from the same layers. Bars are 95\% CIs over problems.}\label{fig:3}
 \end{figure}
 
-\textbf{Keys in the weights} (Figure 3). We fine-tuned Qwen3-32B with LoRA so that it learned three keys from different families (a \texttt{\#\ NOTE:} comment, a fruit-named variable and a \texttt{None} guard), with no key in the prompt. On held-out problems, the fine-tuned monitors flag about 92\% of catchable backdoors without the signal and 0--4\% with it, while their behavior on other carriers is unchanged. Figure 3a shows the same override in all three. Like the prompted monitor, each fine-tuned monitor turns the signal against its backdoor direction from about layer 45--50 (0.7 of its depth) to the end, while the model without a key never does. Figure 3b shows that the original model's evidence heads carry this collusion too. The top 20 undo 29--78\% and the top 40 undo 78--96\%, while random heads undo none.
+\textbf{Keys in the weights} (Figure 3). We fine-tuned Qwen3-32B with LoRA to learn three keys from different families (a \texttt{\#\ NOTE:} comment, a fruit-named variable and a \texttt{None} guard), with no key in the prompt. On held-out problems, the fine-tuned monitors flag about 92\% of catchable backdoors without the signal and 0--4\% with it, with other carriers unaffected. All three show the same override from about layer 45--50, and the original model's top 40 evidence heads undo 78--96\% of the collusion (top 20: 29--78\%), while random heads undo none.
 
-\textbf{Another model family.} In Mistral-Small-24B (Mistral AI, 2025), with the same problems and prompts, the collusion effect is +42 points, although the key alone already makes Mistral more lenient (51\% of catchable backdoors flagged without the signal, against 89\% for the honest monitor). The top 20 evidence heads undo 91\% of it, and 84\% of the effect of a leniency instruction. Its override starts earlier, about halfway through the network (Figure 3a and Appendix C).
+\textbf{Another model family.} In Mistral-Small-24B (Mistral AI, 2025) the collusion effect is +42 points. The top 20 evidence heads undo 91\% of it and 84\% of a leniency instruction, and the override starts about halfway through the network (Appendix C).
 
-\textbf{Stress test with monitors trained to hide.} We trained six more \texttt{\#\ NOTE:} colluders with an extra penalty for showing the override, at different layers or on the evidence heads. All of them still collude, with no measurable cost to honest behavior. The work moves out of the evidence heads into the final layers. The override score measured against the original weights (Section 4.4), read at layer 49, now catches 0--14\% of attacks instead of all of them, though a probe trained on the same activation difference with labeled examples of the key still catches 74--98\% (in the five evaders where we tested it). At layer 62 it still catches 48--95\%, but we picked that layer after seeing the results (Appendix C).
+\textbf{Monitors trained to hide.} We trained six more \texttt{\#\ NOTE:} colluders with an extra penalty for showing the override, at different layers or on the evidence heads. All still collude with no measurable cost to honest behavior, and the work moves out of the evidence heads into the final layers. The trusted-weights override score (Section 4.4) at layer 49 now catches 0--14\% of attacks instead of all of them. A probe on the same activation difference, given labeled examples of the key, still catches 74--98\% (in the five evaders where we tested it), and the override score at layer 62 catches 48--95\%, though we picked that layer after seeing the results (Appendix C).
 
-\subsection{Reading the decoder catches what the monitor hides}
+\subsection{Detecting collusion from activations}
 
 \begin{figure}[tbp]
 \centering
-\includegraphics[width=\linewidth]{figures/fig4_control.pdf}
-\caption{\textbf{A probe on the colluding monitor adds to a trusted monitor.} Safety (share of attacks audited or deferred) against usefulness (share of tasks not deferred to the trusted model T) at a 5\% audit budget, for all attacks (left) and catchable attacks (right). Dots mark safety from auditing alone. The probe shown is calibrated per codebook family, and Table C8 gives the single-calibration and weak-T results. On catchable attacks, protocols that defer on U's own score reach near-full safety after deferring only a small share of tasks.}\label{fig:4}
+\includegraphics[width=0.92\linewidth]{figures/fig4_control.pdf}
+\caption{\textbf{A probe on the colluding monitor adds to a trusted monitor.} Safety (share of attacks audited or deferred) against usefulness (share of tasks not deferred to the trusted model T) at a 5\% audit budget, for all attacks (left) and catchable attacks (right). Dots mark safety from auditing alone. The probe shown is calibrated per codebook family, and Table C8 gives the single-calibration and weak-T results.}\label{fig:4}
 \end{figure}
 
-\textbf{The probe transfers to codebooks it has never seen.} A probe tested on a carrier family it never saw detects the signal in the colluding monitor with an AUROC of \textbf{0.94}, against 0.67 in the honest monitor (each at its own layers), and is ahead in all six families. It does not rely on general oddness in the code, and it holds up when the key moves or is reworded (Appendix C). But a probe on the rule-following monitor transfers almost as well (0.92 against 0.95 on the same subset). So most of the transfer comes from the monitor holding \emph{a} rule about the carrier, and only a late-layer gap reflects collusion itself. Our pre-registered target, an honest-monitor AUROC of at most 0.60, was not met (0.69 at layer 53, the colluding monitor's best layer).
+\textbf{Does the probe work on codebooks it never saw?} Yes. Trained on five carrier families and tested on the sixth, it detects the signal in the colluding monitor with an AUROC of \textbf{0.94}, against 0.67 for the honest monitor, and it is ahead in all six families. It does not depend on general oddness in the code, or on where the key sits or how it is worded (Appendix C).
 
-\textbf{The probe complements a trusted monitor,} because it reads the signal rather than the bug. In the control evaluation, honest tasks are clean code and every attack carries both a backdoor and the signal. Each protocol sets its audit threshold so that 5\% of honest tasks are audited (Figure 4, Table C8). The colluding monitor catches 7\% of attacks. A probe on it catches 45\% when calibrated once on all honest traffic, and 64\% when calibrated per codebook family, though that needs honest traffic from each codebook family to calibrate on. Per family, the probe ranges from 4\% (numeric) to 100\% (comment, lexical), and resampling families gives an interval of {[}32, 90{]}. The trusted monitor T (Claude Haiku 5.5) catches 63\%, and T with the probe 72\% (82\% per family). Input-side defenses help much less. The colluding monitor catches 9\% on redacted code and 21\% on summaries.
+There is a caveat. A probe on the rule-following monitor scores almost as well (0.92 against 0.95 on the same subset). So most of the transfer comes from the monitor holding \emph{a} rule about the carrier, and only a late-layer gap reflects collusion itself. We had pre-registered an honest-monitor AUROC of at most 0.60 and did not meet it (0.69 at layer 53).
 
-\textbf{With a weak trusted monitor, the probe provides almost all the safety.} Haiku is far stronger than the untrusted monitor here, the reverse of the case that motivates untrusted monitoring. So we reran the evaluation with small trusted monitors (Qwen3-1.7B, 4B and 8B). They catch only 6--8\% of attacks, as few as the colluding monitor. Adding the probe raises this to 37--38\% with one calibration and about 60\% per family (Table C8). The gain comes from the probe, which on its own catches 45\% and 64\%, so on all attacks the weak monitor adds nothing, and sharing the audit budget with it costs a few points.
+\textbf{Does it catch attacks?} We test this in a control evaluation. Honest tasks are clean code, and every attack has both a backdoor and the signal. Each method audits the 5\% of tasks it finds most suspicious, and Table 1 gives the share of attacks it catches (Figure 4 shows the safety--usefulness trade-off).
 
-\textbf{The override score separates collusion from harmless rules.} A plain probe also fires when the monitor follows a harmless rule, flagging 57\% of honest code that triggers such a rule in the monitor's own prompt. An \emph{override score} instead measures how far the signal pushes the monitor's activation against its backdoor direction, relative to a key-free run on the same snippet. It flags 10\% of those rule matches (0.2\% for a separate rule-following monitor) while still catching 47--57\% of attacks. Comparing only the two runs' output scores catches as many attacks (47\%) but flags 4.7\% of the rule-following monitor's matches, against 0.2\% for the override score. The override score has two costs. It needs a key-free run of the same monitor as a reference, which in deployment means a trusted copy, and in Mistral it separates collusion from rule-following less well. The plain probe also needs the signal to be rare in honest code, and we did not test the override score under that contamination (Appendix C).
+\begin{center}\small
+\begin{tabular}{@{}lr@{}}
+\toprule
+Method & Attacks caught \\
+\midrule
+Colluding monitor (U) alone & 7\% \\
+U on redacted code & 9\% \\
+U scoring summaries of the code & 21\% \\
+Probe on U, one calibration & 45\% \\
+Probe on U, per-family calibration & 64\% \\
+Trusted monitor T (Claude Haiku 5.5) & 63\% \\
+T with the probe, one calibration & 72\% \\
+T with the probe, per-family calibration & 82\% \\
+\bottomrule
+\end{tabular}
 
-\textbf{A trusted copy of the weights catches keys trained into the model.} When the key lives in the weights, there is no key-free prompt to compare against, so we compare the fine-tuned monitor with a trusted copy of its original weights. This catches 93--100\% of attacks for all three trained-in keys at a single layer (49), while models fine-tuned on the same data without colluding (tested for the \texttt{\#\ NOTE:} key) are flagged on only 1--3\% of attacks. It also flags 45--99\% of clean code that carries the key, so it detects the key's effect on the model rather than intent. Because it needs trusted weights, which could themselves serve as the monitor, it is an audit tool for fine-tuned checkpoints rather than a monitor in its own right (Appendices A and C). We did not test whether simply comparing the two models' output scores would do as well.
+\smallskip
+\textbf{Table 1.} Attacks caught at a 5\% audit budget. One calibration sets the threshold on all honest traffic. Per-family calibration uses honest traffic from each codebook family, which a deployment may not have. Intervals are in Table C8.
+\end{center}
+
+The probe adds to T because it reads the signal, not the bug. T is much stronger than U here, the reverse of the case that motivates untrusted monitoring. With small trusted monitors (Qwen3-1.7B, 4B, 8B) that catch only 6--8\% of attacks, adding the probe raises the catch rate to 37--38\% with one calibration and about 60\% per family. In that case nearly all the safety comes from the probe, and sharing the audit budget with the weak monitor costs a few points against the probe alone (45\% and 64\%).
+
+\textbf{Does it fire on harmless rules?} Yes. A plain probe flags 57\% of honest code that triggers a harmless rule in the monitor's own prompt. The override score flags 10\% of those matches (0.2\% for a separate rule-following monitor) while catching 47--57\% of attacks. It needs a key-free reference run, which in deployment means a trusted copy, and it is less specific in Mistral. The plain probe also needs the signal to be rare in honest code, which we did not test for the override score (Appendix C).
+
+\textbf{What about keys trained into the weights?} There is no key-free prompt to compare against, so we compare the fine-tuned monitor with a trusted copy of its original weights. At layer 49 this catches 93--100\% of attacks for all three keys. Monitors fine-tuned on the same data without colluding are flagged on only 1--3\%. The comparison also flags 45--99\% of clean code that carries the key, so it detects the key's effect on the model, not intent. It needs trusted weights, which could themselves serve as the monitor, so it is an audit tool for fine-tuned checkpoints (Appendices A and C).
 
 \section{Discussion and limitations}
 
-In our setting, collusion is the monitor applying the key's instruction to its own judgment. This fits two observations, that removing it has side effects and that a monitor can recognize a signal without acting on it, as with the ends-in-7 carrier (cf.~Nakamura et al., 2026).
+In our setting, collusion is the monitor applying the key's instruction to its own judgment. This fits two observations: removing it has side effects, and a monitor can recognize a signal without acting on it, as with the ends-in-7 carrier (cf.~Nakamura et al., 2026).
 
 \textbf{What this means for control protocols.}
 
 \begin{itemize}
 \tightlist
 \item
-  \emph{Audit the monitor's activations as well as its inputs.} A probe on the monitor caught 45--64\% of attacks with unseen codebooks, against 9--21\% for input-side defenses, at the cost of one linear read of a pass that already runs.
+  \emph{Audit the monitor's activations as well as its inputs.} A probe caught 45--64\% of attacks with unseen codebooks, against 9--21\% for input-side defenses (on catchable attacks the gap is smaller and not significant, Appendix C), at the cost of one linear read of a pass that already runs.
 \item
-  \emph{Check the override as well as the signal.} A plain probe also fires on harmless rules, so on its own it only works if the signal is rare in honest code and no other rule in the prompt fires on it. The override score separates the two better, given a key-free reference run.
+  \emph{Check the override as well as the signal.} A plain probe also fires on harmless rules, so it only works if the signal is rare in honest code and no other rule in the prompt fires on it. The override score separates the two better, given a key-free reference run.
 \item
-  \emph{Audit fine-tuned monitors against their trusted weights.} This comparison caught all three trained-in keys, where probes trained on prompted keys do not transfer reliably (Appendix A; cf.~Ajayi et al., 2026).
+  \emph{Audit fine-tuned monitors against their trusted weights.} This caught all three trained-in keys, where probes trained on prompted keys do not transfer reliably (Appendix A; cf.~Ajayi et al., 2026).
 \item
   \emph{Watch every late layer.} Monitors trained against the override score or the evidence heads moved the work into the final layers at no measurable cost (cf.~Bailey et al., 2024; Gupta \& Jenner, 2025).
 \end{itemize}
 
-\textbf{Scope.}
+\textbf{Limitations.} The signal is planted and the key is prompted or fine-tuned, so keys that emerge from training are untested. The setting is narrow (two models, one monitor prompt, scripted carriers, single attacks that always carry the signal). The untrusted monitor is weak even without the key (it flags 7.6\% of backdoors), and a setting where it outperforms the trusted monitor is untested. There are six evaders, one training run each and one key, trained only against our own detectors. The selectivity measure, the catchable rule and the layer windows were chosen after seeing the data (Appendix B tests the catchable rule).
+
+\section{Future work}
 
 \begin{itemize}
 \tightlist
 \item
-  \emph{Planted keys.} We plant the signal and give the key in the prompt or by fine-tuning. Keys that emerge from training or as Schelling points are untested.
+  \emph{Keys that nobody planted.} We gave the monitor its key. The next step is to train monitors under pressure that makes collusion pay, for example with a reward for passing a partner's code, and to test whether the same heads carry it. Natural signals such as style or self-recognition would test the rare-signal condition directly.
 \item
-  \emph{Narrow setting.} Two models (full analysis on one), one monitor prompt and scripted carriers.
+  \emph{Detectors without trusted weights.} Our best detector for trained-in keys needs a trusted copy of the model, and the one that does not need it missed two of three keys. We want a detector that works from the suspect model alone, and one that holds across all layers instead of a layer chosen after the fact.
 \item
-  \emph{Simple attacks.} Every attack carries the signal, and we score single attacks rather than a multi-round game, so we cannot measure what a trusted monitor adds on attacks without a signal.
+  \emph{Stronger evaders.} Our six evaders were trained against our own detectors, one run each. A fair test trains against the detector the defender would actually deploy, over several keys and seeds, and compares the override score with simply comparing the two models' outputs.
 \item
-  \emph{Weak untrusted monitor.} Even without the key, the untrusted model flags only 7.6\% of backdoors (Section 4.1). A setting where it is much stronger than the trusted monitor is untested.
+  \emph{A harder control setting.} Here the trusted monitor is much stronger than the untrusted one. The case that motivates untrusted monitoring is the reverse, and it also calls for a multi-round game with honeypots and attacks that do not always carry the signal.
 \item
-  \emph{Adaptive colluders.} Six evaders, one training run each, one key, trained only against our own detectors.
-\item
-  \emph{Choices made after seeing the data.} These include the selectivity measure, the catchable rule and the layer windows (Appendix B tests the catchable rule).
+  \emph{Cleaner controls and more models.} We should test rules that raise suspicion, and benign fine-tunes that lower it only on key-carrying code, to see what the override score really separates. The same analysis should run on more model families and sizes, and on why a probe trained on prompted keys misses some trained-in ones.
 \end{itemize}
 
 \section{Conclusion}
 
-A colluding monitor passes its partner's signal through the same 20 or so heads that carry its honest verdicts. That makes collusion hard to cut out, but because it has to change the verdict, it can be read. A probe on the colluding monitor catches 45--64\% of attacks with unseen codebooks, against 7\% for the monitor itself, and helps most when the trusted monitor is weak. We see the same route in a second model family and with keys in the weights, where a comparison with trusted weights finds it. We have not yet built a detector for trained-in keys that works without trusted weights, tested keys learned under real training pressure, or tried monitors much stronger than the trusted model.
+A colluding monitor passes its partner's signal through the same 20 or so heads that carry its honest verdicts. That makes collusion hard to cut out, but because it has to change the verdict, it can be read. A probe on the colluding monitor catches 45--64\% of attacks with unseen codebooks, against 7\% for the monitor itself, and supplies nearly all the safety when the trusted monitor is weak. We see the same route in a second model family and with keys in the weights, where a comparison with trusted weights finds it. The open problems are detectors that need no trusted weights, keys learned under real training pressure, and monitors stronger than the trusted model (Section 6).
 \section*{References}
 
 \begin{itemize}\small\raggedright
@@ -249,6 +277,8 @@ A colluding monitor passes its partner's signal through the same 20 or so heads 
   Greenblatt et al.~(2024). \href{https://arxiv.org/abs/2312.06942}{AI Control: Improving Safety Despite Intentional Subversion}. ICML 2024.
 \item
   Gupta \& Jenner (2025). \href{https://arxiv.org/abs/2506.14261}{RL-Obfuscation: Can Language Models Learn to Evade Latent-Space Monitors?} arXiv:2506.14261.
+\item
+  Gurnee et al.~(2026). \href{https://arxiv.org/abs/2607.15495}{Verbalizable Representations Form a Global Workspace in Language Models}. arXiv:2607.15495.
 \item
   Hewitt \& Liang (2019). \href{https://arxiv.org/abs/1909.03368}{Designing and Interpreting Probes with Control Tasks}. EMNLP 2019.
 \item
@@ -289,9 +319,46 @@ Code, data and a walkthrough notebook: \url{https://github.com/PeterLurf/apart-c
 \appendix
 \small
 \setlength{\parskip}{3.5pt plus 1pt}
-\section{Limitations and dual-use considerations}
+\textbf{How to read the appendices.}
 
-\textbf{Sample sizes.} The behavioral results rest on 21 catchable backdoors (127 in the extended set) and six carrier families. Head patching uses 61 code pairs from six carriers. The rule-following and detector analyses use 100 problems, and the shared-prompt, key-position and trained-in-key evaluations use 150.
+\begin{itemize}
+\tightlist
+\item
+  \emph{Appendix A} states what the results do and do not show, and the dual-use considerations.
+\item
+  \emph{Appendix B} holds checks on the behavioral result (per-carrier flag rates, the larger backdoor set, other catchable rules) and the reproducibility details.
+\item
+  \emph{Appendix C} holds the methods and supporting results for each part of Section 4, in the same order: probes, mechanism, heads and causal tests, detectors, Mistral-Small-24B, keys in the weights, colluders trained to evade, and the control evaluation.
+\end{itemize}
+
+Some figures call the colluding, honest and rule-following monitors ``receiver'', ``naive'' and ``benign''.
+
+
+\section{Limitations and Dual-Use / Ethical Considerations}
+
+\textbf{What the results show.}
+
+\begin{itemize}
+\tightlist
+\item
+  In Qwen3-32B told a partner's key, collusion reuses the monitor's own verdict route. The decoded signal passes through about 20 evidence heads, mostly in layers 47--53, and is written against the backdoor direction. The same route appears in Mistral-Small-24B and with three fine-tuned keys.
+\item
+  A linear probe on the monitor's activations detects that the monitor decoded a 1-bit signal. It transfers to held-out carrier families, beyond what the same model shows without the key, although a harmless rule about the same carrier produces most of that advantage.
+\item
+  The decoded signal is used causally. Patching the evidence heads moves the monitor's verdict.
+\item
+  At tight audit budgets, such a probe catches more colluding attacks than the colluding monitor does, provided the mark is rare in honest code and no other rule in the monitor's prompt fires on honest code.
+\end{itemize}
+
+\textbf{Sample sizes.}
+
+\begin{itemize}
+\tightlist
+\item Behavioral results: 21 catchable backdoors (127 in the extended set) and six carrier families.
+\item Head patching: 61 code pairs from six carriers.
+\item Rule-following monitor and detector layer sweep: 100 problems. Control evaluation: 300 problems.
+\item Shared-prompt test, key-position probe check and trained-in-key evaluations: 150 problems (the key-position flag-rate check: 100).
+\end{itemize}
 
 \textbf{What the results do not show.}
 
@@ -307,13 +374,43 @@ Code, data and a walkthrough notebook: \url{https://github.com/PeterLurf/apart-c
   \emph{That the detectors survive adaptive colluders or other models.} Colluders trained against the override score move their work beyond the layer-49 score's reach. No detector has been shown to survive such training without trusted weights and labeled examples, or to work beyond the two model families tested.
 \end{itemize}
 
-\textbf{How this work could help an attacker.} Three findings could be misused. First, the probe loses its advantage once about 10\% of honest code carries the mark, so an attacker would prefer natural signals such as stylistic habits or self-recognition, often the strongest strategy once a model is fine-tuned for it (Gardner-Challis et al., 2026). Second, adding the signal direction \(d_S\) to a monitor's activations makes it lenient, but this needs write access to the activations, which already allows more direct sabotage, and we publish no direction vectors. Third, describing what the probe reads could guide evasion training (Section 4.3). We release no colluding weights.
+\textbf{How this work could help an attacker.} Three findings could be misused.
 
-\textbf{Released data and recommendations.} The 1,177 backdoors (the original 300 plus the extended set) are small MBPP functions that return a wrong value on one input, with no exploits, network or file access, or persistence. All models and benchmarks are public, and no human subjects were involved. We recommend using a probe on the monitor as one layer of defense alongside input-side defenses and honeypots, checking how often a candidate mark appears in honest code, and red-teaming the probe before relying on it.
+\begin{enumerate}
+\tightlist
+\item
+  \emph{Choosing marks that evade the probe.} The probe loses its advantage once about 10\% of honest code carries the mark. An attacker would therefore prefer natural signals such as stylistic habits or self-recognition, often the strongest strategy once a model is fine-tuned for it (Gardner-Challis et al., 2026).
+\item
+  \emph{Steering a monitor to be lenient.} Adding the signal direction \(d_S\) to a monitor's activations makes it lenient. This needs write access to the activations, which already allows more direct sabotage, and we publish no direction vectors.
+\item
+  \emph{Evasion training.} Describing what the probe reads could guide training a monitor to hide it (Section 4.3). We release no colluding weights.
+\end{enumerate}
 
-\section{Calibration, per-carrier results and reproducibility}
+\textbf{Released data.} The 1,177 backdoors (the original 300 plus the extended set) are small MBPP functions that return a wrong value on one input. They contain no exploits, network or file access, or persistence. All models and benchmarks are public, and no human subjects were involved.
 
-\textbf{Monitor format and model.} On clean code from 30 problems, only the 0--9 suspicion score gave sensible results. With it, Qwen3-32B passes 96--98\% of clean code (expected suspicion below 4.5) under both the honest prompt and the key, while Qwen3-8B with PASS/FLAG answers passes only 23--66\%. Asked directly whether the partner's mark is present, Qwen3-32B detects it almost perfectly for ten carriers (AUROC 0.97--1.00) but barely for the two hard-eval carriers, a blank line before a return (0.66) and an odd default argument (0.57). Qwen3-8B (0.44--0.80, from its suspicion score because its answers were logged without probabilities) and 14B (0.59--0.96) were weaker. Here and below, AUROC is the probability that a random positive example scores above a random negative one, so 0.5 is chance and 1.0 is perfect.
+\textbf{Recommendations.}
+
+\begin{itemize}
+\tightlist
+\item Use a probe on the monitor as one layer of defense, alongside input-side defenses and honeypots.
+\item Check how often a candidate mark appears in honest code before relying on the probe.
+\item Red-team the probe with evasion training before deployment.
+\end{itemize}
+
+
+\section{Behavioral checks and reproducibility}
+
+\textbf{Monitor format and model.}
+
+\begin{itemize}
+\tightlist
+\item
+  \emph{Format.} On clean code from 30 problems, only the 0--9 suspicion score gave sensible results. With it, Qwen3-32B passes 96--98\% of clean code (expected suspicion below 4.5) under both the honest prompt and the key. Qwen3-8B with PASS/FLAG answers passes only 23--66\%.
+\item
+  \emph{Recognizing the mark.} Asked directly whether the partner's mark is present, Qwen3-32B detects it almost perfectly for ten carriers (AUROC 0.97--1.00). It barely detects the two hard-eval carriers, a blank line before a return (0.66) and an odd default argument (0.57). Qwen3-8B (0.44--0.80, from its suspicion score because its answers were logged without probabilities) and 14B (0.59--0.96) were weaker.
+\item
+  \emph{AUROC.} Here and below, AUROC is the probability that a random positive example scores above a random negative one, so 0.5 is chance and 1.0 is perfect.
+\end{itemize}
 
 \textbf{Collusion by carrier.} Table B1 gives flag rates on catchable backdoors for each carrier. Each row rests on only about 21 pairs, so these numbers are rough.
 
@@ -354,9 +451,29 @@ Collusion effect against the rule-following monitor & +28.6 {[}+20.5, +36.7{]} &
 \textbf{Table B2.} Flag rates without → with the signal, and collusion effects in points with 95\% intervals.
 \end{table}
 
-\textbf{How much the catchable rule matters.} Using the median or a majority of the other nine carriers instead of their average selects exactly the same 210 pairs. The versions below change the size of the effect but not its sign. Requiring all nine carriers gives +35.2 points {[}+19.4, +49.7{]}, requiring any one gives +17.3 {[}+8.8, +25.2{]}, and selecting on the pair's own score gives +20.6, a choice biased by regression to the mean (Appendix C). Looser thresholds give larger effects, +42.3 at 10\% and +50.3 at 20\%. Measured in expected suspicion, the collusion effect is 2.40 points {[}2.17, 2.58{]} on the 0--9 scale for catchable pairs and 1.94 points over all 2,997 pairs.
+\textbf{Effect over all backdoors.} Collusion only changes the outcome for backdoors the monitor would otherwise catch. Over all 2,997 backdoored pairs, most of which the honest monitor misses anyway (it catches 7.6\%), the flag-rate effect is only +1.4 points. The colluding monitor's suspicion score still falls 1.9 points more than the honest monitor's on the 0--9 scale. The comment and variable-name carriers are flagged 67--86\% without the signal and 0--10\% with it (Table B1). By collusion effect, the comment carriers and the fruit name lead (+67 to +81 points), followed by the \texttt{None} guard (+52). There is no collusion for numbers ending in 7 or for \texttt{==\ None}, even though the model recognizes both when asked directly, and the nested helper shows a negative effect (−29 points).
 
-\textbf{Reproducibility.} The repository contains the carrier scripts with 109 unit tests, the experiment code in \texttt{modal\_app/}, and analysis scripts in \texttt{scripts/} that recompute every number in this paper from saved outputs (Table B3). Robustness checks marked ``audit'' are tests in \texttt{scripts/audit.py}, one per setting in \texttt{configs/audit.json}. We used torch 2.14.1, transformers 5.20.2 and nnsight 0.8.1, with Qwen3's thinking mode turned off. Experiments ran on Modal A100-80GB and CPU containers for about \$90, estimated from container run times and covered by credits, and generating the backdoors cost about \$12 in API calls (about 1.2M input and 1.0M output tokens). Claude Sonnet 5 served 12 of the 300 original backdoor requests and 48 of the 900 extended ones. No code predates the sprint, and \texttt{PREEXISTING.md} lists earlier notes. Claude was used for code, analysis and drafting, and the author is responsible for all content.
+\textbf{How much the catchable rule matters.} We chose the catchable rule after seeing the data, so we tested alternatives. None changes the sign of the effect.
+
+\begin{itemize}
+\tightlist
+\item \emph{Same pairs.} Using the median or a majority of the other nine carriers instead of their average selects exactly the same 210 pairs.
+\item \emph{Stricter.} Requiring all nine carriers gives +35.2 points {[}+19.4, +49.7{]}.
+\item \emph{Looser.} Requiring any one carrier gives +17.3 {[}+8.8, +25.2{]}. Looser flag thresholds give larger effects, +42.3 at 10\% and +50.3 at 20\%.
+\item \emph{Own score.} Selecting on the pair's own score gives +20.6, a choice biased by regression to the mean (Appendix C).
+\item \emph{In suspicion.} Measured in expected suspicion, the collusion effect is 2.40 points {[}2.17, 2.58{]} on the 0--9 scale for catchable pairs and 1.94 points over all 2,997 pairs.
+\end{itemize}
+
+\textbf{Reproducibility.}
+
+\begin{itemize}
+\tightlist
+\item \emph{Code.} The repository contains the carrier scripts and library with 114 unit tests, the experiment code in \texttt{modal\_app/}, and analysis scripts in \texttt{scripts/} that recompute every number in this paper from saved outputs (Table B3).
+\item \emph{Audit checks.} Robustness checks marked ``audit'' are tests in \texttt{scripts/audit.py}, each run by setting \texttt{\{"test": <name>\}} in \texttt{configs/audit.json}. Their saved summaries are in \texttt{data/audit/}.
+\item \emph{Software.} The Modal image used torch 2.14.1, transformers 5.20.2 and nnsight 0.8.1, with Qwen3's thinking mode turned off. The local analysis environment is pinned in \texttt{uv.lock}.
+\item \emph{Compute and cost.} Experiments ran on Modal A100-80GB and CPU containers for about \$90, estimated from container run times and covered by credits. Generating the backdoors cost about \$12 in API calls (about 1.2M input and 1.0M output tokens). Claude Sonnet 5 served 12 of the 300 original backdoor requests and 48 of the 900 extended ones. These figures exclude the Claude Haiku 5.5 calls for the trusted monitor and summaries and about \$32 of Claude Sonnet calls for an early exploratory experiment not reported here.
+\item \emph{Provenance.} No code predates the sprint, and \texttt{PREEXISTING.md} lists earlier notes. Claude was used for code, analysis and drafting, and the author is responsible for all content.
+\end{itemize}
 
 \begin{table}[htbp]\centering\footnotesize
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}p{12.2cm}@{}}
@@ -365,7 +482,7 @@ Result & Code \\
 \midrule
 Backdoors and behavior & \texttt{modal\_app/backdoors.py}, \texttt{modal\_app/backdoors\_v2.py}, \texttt{scripts/catchable\_e0b1.py}, \texttt{scripts/catchable\_e0b1\_ext.py}, audit \texttt{catchable} \\
 Probes and their transfer & \texttt{scripts/e1\_nested.py}, \texttt{scripts/permutation\_null.py}, audit \texttt{layersel}, \texttt{hardeval}, \texttt{benign}, \texttt{after}, \texttt{variants} \\
-Mechanism and heads & \texttt{modal\_app/mechanism.py}, \texttt{modal\_app/circuit.py}, \texttt{scripts/m4\_bootstrap.py}, \texttt{scripts/robustness\_checks.py}, audit \texttt{outputdir}, \texttt{leniency} \\
+Mechanism and heads & \texttt{modal\_app/mechanism.py}, \texttt{modal\_app/circuit.py}, \texttt{scripts/m4\_bootstrap.py}, \texttt{scripts/robustness\_checks.py}, audit \texttt{outputdir}, \texttt{leniency}; Jacobian lens: \texttt{jlens\_trial/jlens\_app.py}, audit \texttt{jlens} \\
 Causal interventions & \texttt{modal\_app/causal.py}, \texttt{scripts/catchable\_e1c.py}, \texttt{scripts/ablation\_fpcost.py} \\
 Detectors & \texttt{modal\_app/benign\_fp.py}, \texttt{scripts/robustness\_checks.py}, audit \texttt{dualprompt} \\
 Mistral-Small-24B & \texttt{modal\_app/replicate.py}, \texttt{scripts/replicate\_summary.py}, audit \texttt{benign\_mistral}, \texttt{outputdir\_mistral}, \texttt{leniency\_mistral} \\
@@ -378,7 +495,7 @@ Control evaluation & \texttt{modal\_app/e4.py}, \texttt{scripts/analyze\_e4.py},
 \textbf{Table B3.} Where each result comes from. Figures are drawn by \texttt{scripts/paper\_figs.py}, \texttt{scripts/concept\_fig.py} and \texttt{scripts/generality\_fig.py}.
 \end{table}
 
-\section{Method details}
+\section{Methods and supporting results}
 
 \textbf{Carriers.} Each carrier either swaps one token in a fixed slot (a substitution), so the two versions line up token by token, or inserts extra code into the signalled version (an insertion). Table C1 lists them. Figure C1 labels the colluding monitor ``receiver'', the honest monitor ``naive'' and the rule-following monitor ``benign''.
 
@@ -400,30 +517,86 @@ structural & defines a nested helper, or starts with a \texttt{None} guard & ins
 \textbf{Table C1.} The twelve carriers. Asterisks mark the two hard-eval carriers.
 \end{table}
 
-\textbf{Data.} The 300 problems come from the 690 MBPP problems that can take all 12 carriers. Every backdoor passes the MBPP tests and gives a wrong answer on its trigger input, and both versions of every carrier pair pass the tests and keep the backdoor. One carrier does not apply to three backdoors, which leaves 2,997 backdoored pairs and 3,597 attacks.
+\textbf{Data.}
 
-\textbf{Catchable selection.} We split the problems into two random halves. The flag threshold for each half is the honest monitor's 95th percentile on clean, unsignalled code from the other half, which gives a 5\% false-positive rate. A backdoored pair counts as catchable when the honest monitor's average score for the same backdoor under the other nine carriers is above that threshold. Selecting on the pair's own score would instead exaggerate the honest monitor's drop with the signal through regression to the mean (100\% to 80\%, against 92\% to 83\% with our rule).
+\begin{itemize}
+\tightlist
+\item The 300 problems come from the 690 MBPP problems that can take all 12 carriers.
+\item Every backdoor passes the MBPP tests and gives a wrong answer on its trigger input.
+\item Both versions of every carrier pair pass the tests and keep the backdoor.
+\item The return-in-parentheses carrier does not apply to three backdoors. That leaves 2,997 backdoored pairs on the ten training carriers (10 × 300 − 3) and 3,597 attacks on all twelve (12 × 300 − 3).
+\end{itemize}
 
-\textbf{Probes.} We record the residual stream at the last prompt token, at every second layer, for 36,788 prompts. Each probe standardizes these 5,120-dimensional activations and fits an L2-regularized logistic regression, with the regularization strength and a calibration temperature chosen on 20\% of the training problems. For each held-out family, we use the layer with the best average score over inner folds that also leave that family out. Different carriers sometimes produce the same snippet (the unsignalled version of \texttt{==\ None} is the signalled version of the \texttt{None} guard), so every probe drops any training pair whose snippet also appears in its test set.
+\textbf{Catchable selection.}
 
-\textbf{Causal tests.} The signal direction \(d_S\) and the backdoor direction \(d_B\) are differences of mean last-token activations of the colluding monitor, estimated on problems outside the evaluation set. To remove a direction, we project it out at every token position of the odd layers 45--55, or 21--63 where stated. To steer, we add a multiple of \(d_S\) at layer 53. To patch carrier tokens, we overwrite their hidden states at one layer with those from the paired run, using the 94 substitution pairs whose tokens line up. Random control directions use the same layers (for removal) or the same size (for steering).
+\begin{itemize}
+\tightlist
+\item We split the problems into two random halves. The flag threshold for each half is the honest monitor's 95th percentile on clean, unsignalled code from the other half, which gives a 5\% false-positive rate.
+\item A backdoored pair counts as catchable when the honest monitor's average score for the same backdoor under the other nine carriers is above that threshold.
+\item Selecting on the pair's own score would instead exaggerate the honest monitor's drop with the signal through regression to the mean (100\% to 80\%, against 92\% to 83\% with our rule).
+\end{itemize}
+
+\textbf{Probes.}
+
+\begin{itemize}
+\tightlist
+\item \emph{Inputs.} We record the residual stream at the last prompt token, at every second layer, for 36,788 prompts.
+\item \emph{Model.} Each probe standardizes these 5,120-dimensional activations and fits an L2-regularized logistic regression. The regularization strength and a calibration temperature are chosen on 20\% of the training problems.
+\item \emph{Layer choice.} For each held-out family, we use the layer with the best average score over inner folds that also leave that family out.
+\item \emph{Shared snippets.} Different carriers sometimes produce the same snippet (the unsignalled version of \texttt{==\ None} is the signalled version of the \texttt{None} guard), so every probe drops any training pair whose snippet also appears in its test set.
+\end{itemize}
+
+\textbf{Causal tests.}
+
+\begin{itemize}
+\tightlist
+\item \emph{Directions.} The signal direction \(d_S\) and the backdoor direction \(d_B\) are differences of mean last-token activations of the colluding monitor, estimated on problems outside the evaluation set.
+\item \emph{Removing a direction.} We project it out at every token position of the odd layers 45--55, or 21--63 where stated. The \emph{signal-specific part of} \(d_S\) is its component orthogonal to \(d_B\).
+\item \emph{Steering.} We add a multiple of \(d_S\) at layer 53.
+\item \emph{Patching carrier tokens.} We overwrite their hidden states at one layer with those from the paired run, using the 94 substitution pairs whose tokens line up.
+\item \emph{Controls.} Random directions use the same layers (for removal) or the same size (for steering).
+\end{itemize}
 
 \subsection*{Checks on the probe}
+
+These checks support Section 4.4: a probe trained on some carrier families detects the signal in the colluding monitor for families it never saw. Each item asks whether something other than the signal could explain this.
 
 \begin{itemize}
 \tightlist
 \item
-  \emph{Removing what the honest monitor sees.} We estimated the honest monitor's signal subspace on training families only (its probe direction plus one mean difference per family) and projected it out of all activations. The colluding monitor's probe is unaffected (0.964 to 0.962 at layer 53), while the honest monitor's falls to near chance (0.694 to 0.532).
+  \emph{Is it what the honest monitor already sees?} No. We estimated the honest monitor's signal subspace on training families only (its probe direction plus one mean difference per family) and projected it out of all activations. The colluding monitor's probe is unaffected (0.964 to 0.962 at layer 53), while the honest monitor's falls to near chance (0.694 to 0.532).
 \item
-  \emph{Code length and backdoors.} Insertions make the code longer, and on them the honest monitor (0.64) is only a little above a length-only detector (0.58--0.60). On substitutions, where length carries no information, it scores 0.68, against 0.91 for the colluding monitor. Training and testing on clean code alone gives the same result as before (0.963 at layer 53), so the probe does not depend on backdoors.
+  \emph{Is it code length or the backdoor?} Insertions make the code longer, and on them the honest monitor (0.64) is only a little above a length-only detector (0.58--0.60). On substitutions, where length carries no information, it scores 0.68, against 0.91 for the colluding monitor. Training and testing on clean code alone gives the same result as before (0.963 at layer 53), so the probe does not depend on backdoors.
 \item
-  \emph{Families, layers and the pre-registered criterion.} By family, the colluding monitor ranges from 1.00 (comment, lexical) to 0.75 (syntactic), and its intervals never overlap the honest monitor's. If the honest monitor chooses its own layer, it reaches 0.668 against 0.938, and even its best layer chosen on test data leaves a gap of 0.18. We pre-registered an AUROC of at least 0.75 for the colluding monitor and at most 0.60 for the honest monitor at one layer. This was not met (the honest monitor scores 0.694 at layer 53), so we report the gap between the two (Hewitt \& Liang, 2019), a choice made after seeing the result.
+  \emph{Is the comparison fair to the honest monitor?} Yes.
+  \begin{itemize}
+  \tightlist
+  \item By family, the colluding monitor ranges from 1.00 (comment, lexical) to 0.75 (syntactic), and its intervals never overlap the honest monitor's.
+  \item If the honest monitor chooses its own layer, it reaches 0.668 against 0.938. Even its best layer chosen on test data leaves a gap of 0.18.
+  \item We pre-registered an AUROC of at least 0.75 for the colluding monitor and at most 0.60 for the honest monitor at one layer, the layer chosen by inner cross-validation. This was not met (that layer is 53, where the honest monitor scores 0.694). A later layer (63) would meet it, but picking it after seeing the results does not count, so we report the gap between the two (Hewitt \& Liang, 2019), a choice made after seeing the result.
+  \end{itemize}
 \item
-  \emph{How much the gap varies.} The 95\% interval for the gap is {[}+0.26, +0.28{]} when resampling problems and {[}+0.21, +0.33{]} when resampling families, and all six families favor the colluding monitor (sign test p = 0.016). In a permutation test that shuffles the training labels 1,000 times per family, the colluding monitor beats the null in every family (p = 0.001), and the gap does so overall and for three families. It does not for the comment, numeric and lexical families, where the colluding monitor is near ceiling and the null is wide. Adding the hard-eval carriers lowers the gap to +0.218 {[}+0.15, +0.27{]}, and both hard-eval carriers stay near chance for both monitors.
+  \emph{How much does the gap vary?}
+  \begin{itemize}
+  \tightlist
+  \item The 95\% interval for the gap is {[}+0.26, +0.28{]} when resampling problems and {[}+0.21, +0.32{]} when resampling families. All six families favor the colluding monitor (sign test p = 0.016).
+  \item In a permutation test that shuffles the training labels 1,000 times per family, the colluding monitor beats the null in every family (p = 0.001). The gap does so overall and for the formatting, structural and syntactic families. It does not for the comment, numeric and lexical families, where the colluding monitor is near ceiling and the null is wide.
+  \item Adding the hard-eval carriers lowers the gap to +0.218 {[}+0.15, +0.27{]}, and both hard-eval carriers stay close to chance for both monitors (AUROC 0.48--0.59).
+  \end{itemize}
 \item
-  \emph{The rule-following monitor.} On the 100-problem subset, the colluding monitor reaches 0.945, the rule-following monitor 0.924 and the honest monitor 0.687, so the harmless rule reproduces 92\% of the colluding monitor's lead. What remains (+0.021) comes almost entirely from the syntactic family and appears only in late layers (Table C2). A probe trained on the rule-following monitor scores the colluding monitor at 0.97 at layer 53, but one trained on the colluding monitor scores the rule-following one at only 0.80, so late in the network the colluding monitor carries an extra component of its own.
+  \emph{Does a harmless rule explain it?} Mostly. On the 100-problem subset, the colluding monitor reaches 0.945, the rule-following monitor 0.924 and the honest monitor 0.687, so the harmless rule reproduces 92\% of the colluding monitor's lead.
+  \begin{itemize}
+  \tightlist
+  \item What remains (+0.021) comes almost entirely from the syntactic family and appears only in late layers (Table C2).
+  \item A probe trained on the rule-following monitor scores the colluding monitor at 0.97 at layer 53, but one trained on the colluding monitor scores the rule-following one at only 0.80. Late in the network, the colluding monitor carries an extra component of its own.
+  \end{itemize}
 \item
-  \emph{Key position and wording.} With the key placed after the code, or reworded, probes trained only on the original prompts reach 0.976 and 0.934, against 0.937 on the original prompts for the same 150 problems. Moving the key after the code strengthens collusion (suspicion on backdoored code drops 2.3 points rather than 1.5), and the reworded key matches the original.
+  \emph{Does the key's position or wording matter?} Little.
+  \begin{itemize}
+  \tightlist
+  \item \emph{Probe.} With the key placed after the code, or reworded, probes trained only on the original prompts reach 0.976 and 0.934, against 0.937 on the original prompts for the same 150 problems.
+  \item \emph{Behavior.} Moving the key after the code strengthens collusion. Averaged over the 12 carriers, the colluding monitor's suspicion on backdoored code drops 2.3 points from S = 0 to S = 1, against 1.5 with the key before the code. The reworded key matches the original (1.5).
+  \end{itemize}
 \end{itemize}
 
 \begin{table}[htbp]\centering\footnotesize
@@ -443,16 +616,30 @@ Honest & 0.687 & 0.695 & 0.735 & 0.735 & 0.736 & 0.746 & 0.704 & 0.679 & 0.571 \
 
 \subsection*{Mechanism}
 
+These results support Section 4.2: the monitor first matches the signal to the key (binding), then writes it against its backdoor direction (override).
+
 \begin{itemize}
 \tightlist
 \item
-  \emph{Binding, then override.} The colluding monitor's S--B alignment, the cosine between \(d_S\) and \(d_B\), reaches −0.57 {[}−0.58, −0.55{]} at layer 53 and −0.78 at layer 63. The rule-following monitor stays at +0.34 {[}+0.29, +0.38{]} over layers 53--61, where the colluding monitor averages −0.64, and the two monitors' signal directions separate in exactly this window (cosine 0.96 at layer 41 and 0.00 at layer 61, Figure C1b). With the key after the code, so that the carrier tokens cannot see it, the alignment still turns negative from layer 45. On the four carriers tested here its effect on flag rates is unchanged (+22.3 points against +22.0), although over all 12 carriers it lowers suspicion more (see above).
+  \emph{Binding, then override.} The S--B alignment is the cosine between \(d_S\) and \(d_B\). Decodability is how well a projection onto \(d_S\) separates signalled from unsignalled code (cross-fitted AUROC).
+  \begin{itemize}
+  \tightlist
+  \item The colluding monitor's alignment reaches −0.57 {[}−0.58, −0.55{]} at layer 53 and −0.78 at layer 63. The rule-following monitor stays at +0.34 {[}+0.29, +0.38{]} over layers 53--61, where the colluding monitor averages −0.64 (intervals from a problem bootstrap on layers 53, 57 and 61).
+  \item The two monitors' signal directions separate between layers 45 and 53 (cosine 0.96 at layer 41, 0.15 at layer 53 and 0.00 at layer 61, Figure C1b).
+  \item With the key after the code, so that the carrier tokens cannot see it, the alignment still turns negative from layer 45. On the four carriers tested here its effect on flag rates is unchanged (+22.3 points against +22.0), although over all 12 carriers it lowers suspicion more (see above).
+  \end{itemize}
 \item
-  \emph{Early layers.} Over layers 1--19 the pooled signal direction points along the backdoor direction (Figure C1a), but only for the four insertion carriers, which add code as a backdoor does. The eight substitution carriers, including those with the most collusion, average +0.04, so we do not claim a separate carrier-detection stage.
+  \emph{Early layers.} Over layers 1--19 the pooled signal direction points along the backdoor direction (Figure C1a), mainly for the four insertion carriers, which add code as a backdoor does (average +0.51). The eight substitution carriers, including those with the most collusion, average +0.04, so we do not claim a separate carrier-detection stage.
 \item
-  \emph{Correlations across carriers.} Across the 12 carriers, the late alignment (its average over layers 53--61) correlates with the collusion effect at r = −0.89 {[}−0.97, −0.66{]}, and at −0.81 {[}−0.95, −0.41{]} after controlling for decodability, which is how well a projection onto \(d_S\) separates signalled from unsignalled code. Decodability correlates at 0.71 {[}0.23, 0.91{]} and adds little once the alignment is known. Dropping one carrier at a time keeps the alignment's partial r between −0.92 and −0.71. Recognition and action can come apart. The ends-in-7 carrier is decoded at 0.89 but barely overridden (−0.13), and it draws no collusion.
+  \emph{Does the override explain which carriers collude?}
+  \begin{itemize}
+  \tightlist
+  \item Across the 12 carriers, the late alignment (its average over layers 53--61) correlates with the collusion effect at r = −0.89 {[}−0.97, −0.66{]}, and at −0.81 {[}−0.95, −0.41{]} after controlling for decodability.
+  \item Decodability correlates at 0.71 {[}0.23, 0.91{]} and adds little once the alignment is known. Dropping one carrier at a time keeps the alignment's partial r between −0.92 and −0.71.
+  \item Recognition and action can come apart. The ends-in-7 carrier is decoded at 0.89 but barely overridden (−0.13), and it draws no collusion.
+  \end{itemize}
 \item
-  \emph{Backdoor evidence or general suspicion?} We built a suspicion direction from clean code alone, as the mean activation of the monitor's most suspicious third minus its least suspicious third. Its cosine with \(d_B\) is 0.86--0.94 over layers 41--63, and alignment with it predicts collusion at r = −0.91 {[}−0.97, −0.70{]}, leaving the S--B alignment nothing to add (partial r +0.18). The override is therefore the signal pushing the monitor's suspicion down, and our data cannot separate backdoor evidence from suspicion in general.
+  \emph{Backdoor evidence or general suspicion?} We built a suspicion direction from clean code alone, as the mean activation of the monitor's most suspicious third minus its least suspicious third. Its cosine with \(d_B\) is 0.86--0.95 over layers 41--63, and alignment with it predicts collusion at r = −0.91 {[}−0.97, −0.70{]}, leaving the S--B alignment nothing to add (partial r +0.18). The override is therefore the signal pushing the monitor's suspicion down, and our data cannot separate backdoor evidence from suspicion in general.
 \end{itemize}
 
 \begin{figure}[tbp]
@@ -464,14 +651,28 @@ Honest & 0.687 & 0.695 & 0.735 & 0.735 & 0.736 & 0.746 & 0.704 & 0.679 & 0.571 \
 
 \subsection*{Heads and causal interventions}
 
+These results support the claim in Section 4.2 that the evidence heads carry the override, and that removing directions does not fix collusion cleanly.
+
 \begin{itemize}
 \tightlist
 \item
-  \emph{How we patch heads.} We copy the last-token outputs of the selected heads from the run without the signal into the run with it (for the honest signal, from the honest monitor's clean run into its backdoored run), and report the share of the score change this undoes. Heads are ranked by attribution patching, a gradient-based estimate of each head's effect on the honest monitor's backdoor contrast, but every recovery figure comes from actually patching the heads. Each set of top heads is compared with five random sets from the same layers.
+  \emph{How we patch heads.} We copy the last-token outputs of the selected heads from the run without the signal into the run with it (for the honest signal, from the honest monitor's clean run into its backdoored run), and report the share of the score change this undoes.
+  \begin{itemize}
+  \tightlist
+  \item Heads are ranked by attribution patching, a gradient-based estimate of each head's effect on the honest monitor's backdoor contrast. Every recovery figure comes from actually patching the heads.
+  \item Each set of top heads is compared with five random sets from the same layers.
+  \end{itemize}
 \item
-  \emph{Pairs and results.} The 61 pairs where the signal flips the verdict come from 28 problems, mostly with comment carriers. Of the top 20 heads, 16 sit in layers 47--53 and 4 in layers 60--63. The top 5, 10 and 40 heads undo 34\%, 61\% and 96\% of the collusion, and 41\%, 64\% and 96\% of the honest backdoor signal. Layer 49 alone undoes 44\% of the collusion but only 18\% of the honest signal. Rankings by collusion and by honest evidence agree (18 of the top 20 collusion heads are among the top 100 evidence heads), though both use the same score gradient, so some agreement is built in.
+  \emph{Pairs and results.} A pair flips the verdict when the signal moves the colluding monitor's score across the 4.5 cutoff. The 61 token-aligned pairs that flip it come from 28 problems, about half with comment carriers (30 of 61), and the 56 with a score gap above 0.5 enter the averages.
+  \begin{itemize}
+  \tightlist
+  \item Of the top 20 heads, 16 sit in layers 47--53 and 4 in layers 60--63.
+  \item The top 5, 10 and 40 heads undo 34\%, 61\% and 96\% of the collusion, and 41\%, 64\% and 96\% of the honest backdoor signal.
+  \item Layer 49 alone undoes 44\% of the collusion but only 18\% of the honest signal.
+  \item Rankings by collusion and by honest evidence agree (18 of the top 20 collusion heads are among the top 100 evidence heads), though both rankings take gradients of the same suspicion score (in different runs), so some agreement is built in.
+  \end{itemize}
 \item
-  \emph{Score changes without a signal.} We also patched runs where an instruction, not a signal, changes the score, namely a plain instruction to be lenient on backdoored code (63 pairs), one to be strict on clean code (55 pairs), and the key with no signal present (20 pairs). The top 20 heads undo 94\%, 84\% and 87\% of these changes, against 85\% for collusion, while random heads from the same layers undo −8\% to +2\%.
+  \emph{Score changes without a signal.} We also patched runs where an instruction, not a signal, changes the score: a plain instruction to be lenient on backdoored code (63 pairs), one to be strict on clean code (55 pairs), and the key with no signal present (20 pairs). The top 20 heads undo 94\%, 84\% and 87\% of these changes, against 85\% for collusion. Layer-matched random sets of 20 heads (five draws each) undo −8\% to −3\%.
 \item
   \emph{Carrier tokens.} Patching unsignalled carrier tokens into signalled runs restores flagging of catchable backdoors by 37--48 points at layers 1--41, and the reverse patch induces collusion. From layer 51 on, both effects vanish, so by then the verdict no longer depends on the carrier tokens themselves.
 \end{itemize}
@@ -492,13 +693,44 @@ Add \(4d_S\) at layer 53 (without signal) & −79.5 {[}−88.8, −68.6{]} & sam
 \textbf{Table C3.} Effect of removing or adding directions on 166 catchable pairs, in points with 95\% intervals. The random steering vector has the size of \(4d_S\).
 \end{table}
 
-This run predates our final catchable rule and covers 166 of the 210 catchable pairs. Steering with \(d_S\) makes the monitor lenient but is not specific, since the random vector already lowers flagging by 36 points. Removing directions has side effects. On a 40-problem subset, removing \(d_B\) over layers 21--63 makes the colluding monitor flag 95\% of clean code. Removing the signal-specific part of \(d_S\) also raises false alarms on clean code for both monitors, for example from 31\% to 38\% for the colluding monitor and from 35\% to 46\% for the honest one, while random directions change them by at most 0.5 points.
+This run predates our final catchable rule and covers 166 of the 210 catchable pairs. Table C3 shows two things.
+
+\begin{itemize}
+\tightlist
+\item \emph{Steering is not specific.} Adding \(d_S\) makes the monitor lenient, but a random vector already lowers flagging by 36 points.
+\item \emph{Removal has side effects.} On a 40-problem subset with a fixed 4.5 cutoff, removing \(d_B\) over layers 21--63 makes the colluding monitor flag 95\% of clean code. In a separate run on clean code of the catchable problems, with the cross-fitted thresholds, removing the signal-specific part of \(d_S\) over layers 45--55 raises false alarms for both monitors, from 31\% to 38\% for the colluding monitor and from 35\% to 46\% for the honest one. Random directions change them by at most 0.5 points.
+\end{itemize}
+
+\textbf{Reading the override in words (preliminary).} We applied the pre-fitted Jacobian lens for Qwen3-32B (Gurnee et al., 2026) to the cached last-token activations of the 100-problem subset. A word's shift is the change in its mean log-probability from unsignalled to signalled code, for the colluding monitor minus the rule-following one. Up to layer 47 the signal changes the readout only by noise. From layer 49 it raises specific words in the colluding monitor only, while the rule-following monitor's own shifts stay within ±0.4 nats.
+
+\begin{center}\footnotesize
+\begin{tabular}{@{}lll@{}}
+\toprule
+Layer & Words the signal raises & Shift (nats) \\
+\midrule
+49 & leave, exemption and pardon (mostly Chinese tokens) & about +2 \\
+53--57 & ``zero'' in many forms, in English and Chinese & +2.5 to +3 \\
+61 & `` partner'', `` Partner'', `` partners'' & +2.3 to +2.8 (plain logit lens +0.7 to +1.1) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+A training-free score from this lens, the log-probability of a fixed list of trust words minus suspicion words, catches 42\% of attacks at a 5\% false-positive rate with no alarms on the rule-following monitor. We chose its layer (57) after seeing the results, the word list contains ``partner'' from our key, and there are no intervals, so we treat this as a hint rather than a result. The code is \texttt{jlens\_trial/jlens\_app.py}, run by the audit test \texttt{jlens}.
 
 \subsection*{Detectors}
 
-\textbf{Override score.} For a snippet, let \(h\) be the colluding monitor's activation, \(h_\mathrm{ref}\) the activation of a key-free run on the same snippet, and \(u_B\) the unit backdoor direction. The override score is \(-(h - h_\mathrm{ref}) \cdot u_B\), which is large when the key pushes the activation away from backdoor evidence. Without the reference run, the plain projection \(-h \cdot u_B\) catches at most 8\% of attacks, because the override roughly cancels the backdoor's evidence rather than overshooting it.
+\textbf{Override score.} For a snippet, let \(h\) be the colluding monitor's activation, \(h_\mathrm{ref}\) the activation of a key-free run on the same snippet (the honest monitor's prompt), and \(u_B\) the unit backdoor direction. The override score is \(-(h - h_\mathrm{ref}) \cdot u_B\), which is large when the key pushes the activation away from backdoor evidence. Without the reference run, the plain projection \(-h \cdot u_B\) catches at most 8\% of attacks. We read this as the override roughly cancelling the backdoor's evidence rather than overshooting it.
 
-\textbf{Layer sweep.} All detectors are trained on the 100-problem subset with one carrier family held out, with thresholds at a 5\% false-positive rate on honest code from the other half of problems. A benign alarm is a flag on the rule-following monitor when its rule is triggered on clean code. Training the probe with these cases as hard negatives removes the benign alarms, but just as well at layer 21, before any override exists, so it teaches the probe the prompts rather than collusion (Table C4). Comparing only the two runs' output scores catches 47\% of attacks with 4.7\% benign alarms.
+\textbf{Layer sweep.} Table C4 supports the claim in Section 4.4 that the override score separates collusion from harmless rules better than a probe does.
+
+\begin{itemize}
+\tightlist
+\item The plain probe and \(u_B\) are trained on the colluding monitor's rows of all 300 problems, with one carrier family held out. Hard negatives come from the 100-problem subset, the only problems the rule-following monitor ran on.
+\item Evaluation uses the 100-problem subset. Thresholds are set at a 5\% false-positive rate on the colluding monitor's clean, unsignalled code from the other half of problems.
+\item A benign alarm is a flag on the rule-following monitor when its rule is triggered on clean code.
+\item Training the probe with these cases as hard negatives removes the benign alarms, but just as well at layer 21, before any override exists, so it teaches the probe the prompts rather than collusion.
+\item Comparing only the two runs' output scores catches 47\% of attacks with 4.7\% benign alarms.
+\end{itemize}
 
 \begin{table}[htbp]\centering\footnotesize
 \begin{tabular}{@{}lccc@{}}
@@ -518,7 +750,7 @@ Layer & Plain probe & Probe with hard negatives & Override score \\
 \textbf{Table C4.} Benign alarms / attacks caught, at a 5\% false-positive rate.
 \end{table}
 
-\textbf{A harmless rule in the same prompt.} The benign alarms above come from a different prompt, which a probe could tell apart from the key's. We therefore re-ran 150 problems with one system prompt that holds the key for one carrier and the harmless rule for the other carrier in the same family, using the control evaluation's probes and thresholds. The monitor still colludes on the key's carrier, and with the key alone the plain probe catches 72.5\% of attacks on these carriers. Table C5 gives the results with the shared prompt.
+\textbf{A harmless rule in the same prompt.} The benign alarms above come from a different prompt, which a probe could tell apart from the key's. We therefore re-ran 150 problems with one system prompt that holds the key for one carrier and the harmless rule for the other carrier in the same family. Probes are refit with the control evaluation's recipe (layer 53, one family held out), and thresholds are set at 5\% on each family's clean shared-prompt code, cross-fitted over problem halves. The monitor still colludes on the key's carrier, and with the key alone the plain probe catches 72.5\% of attacks on these carriers. Table C5 gives the results with the shared prompt.
 
 \begin{table}[htbp]\centering\footnotesize
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.3cm}>{\raggedright\arraybackslash}p{2.6cm}>{\raggedright\arraybackslash}p{2.6cm}>{\raggedright\arraybackslash}p{3.9cm}>{\raggedright\arraybackslash}p{2.3cm}@{}}
@@ -532,41 +764,59 @@ Override score & 57.2\% {[}55.0, 59.3{]} & 10.5\% {[}8.3, 12.5{]} & 57.4, 57.1, 
 \end{tabular}
 
 \smallskip
-\textbf{Table C5.} Detectors when the key and a harmless rule share one prompt (95\% intervals over problems).
+\textbf{Table C5.} Detectors at layer 53 when the key and a harmless rule share one prompt (95\% intervals over problems). The third column re-sets the 5\% threshold on honest traffic in which rule matches make up 10, 25 or 50\% of the code.
 \end{table}
 
 \subsection*{Second model: Mistral-Small-24B}
 
-We repeated the main analyses on Mistral-Small-24B-Instruct-2501 (40 layers), which passed the same calibration.
+We repeated the main analyses on Mistral-Small-24B-Instruct-2501 (40 layers), which passed the same calibration (it passes 98--100\% of clean code).
 
 \begin{itemize}
 \tightlist
 \item
   \emph{Behavior.} On 357 catchable pairs from 37 problems, the key alone makes Mistral more lenient, flagging 51\% of catchable backdoors without the signal, against 89\% for the honest monitor. The signal then cuts this to 7\%, a collusion effect of +42.0 points {[}+32.4, +51.0{]}. Unlike in Qwen, the ends-in-7 carrier also draws collusion (+39).
 \item
-  \emph{Probes and alignment.} Probes reach 0.942 on the colluding monitor and 0.631 on the honest one. On the 100-problem subset, the colluding monitor reaches 0.948, the rule-following monitor 0.931 and the honest one 0.694, so the harmless rule again reproduces 93\% of the lead. The alignment turns negative at layer 19, about halfway through the network. Across carriers it correlates with collusion at r = −0.60 {[}−0.87, −0.05{]}, but decodability does about as well (+0.66). As in Qwen, the backdoor direction is close to the suspicion direction (cosine 0.72--0.92).
+  \emph{Probes.} Probes reach 0.942 on the colluding monitor and 0.631 on the honest one. On the 100-problem subset, the colluding monitor reaches 0.948, the rule-following monitor 0.931 and the honest one 0.694, so the harmless rule again reproduces 93\% of the lead.
 \item
-  \emph{Heads.} On 168 pairs where the signal flips the verdict, the top 5, 10, 20 and 40 heads undo 44\%, 83\%, 91\% and 96\% of the collusion, and random heads from the same layers almost none. Ranked over a wider range of layers, 16 of the top 20 sit at layers 16--21, about halfway through the network. The original top 20 heads also carry 84\% of a leniency instruction's effect, 78\% of a strictness instruction's and 50\% of the key's effect without a signal.
+  \emph{Alignment.} It turns negative at layer 19, about halfway through the network. Across carriers it correlates with collusion at r = −0.60 {[}−0.87, −0.05{]}, but decodability does about as well (+0.66). As in Qwen, the backdoor direction is close to the suspicion direction (cosine 0.72--0.92 over layers 11--39).
 \item
-  \emph{Detectors.} At layer 31 (the relative depth of Qwen's layer 49) and a 5\% false-positive rate, the override score catches 65.1\% of attacks but raises 20.5\% benign alarms, against 47\% and 0.2\% in Qwen. At its best layer on held-out data (layer 39), it reaches 65.2\% and 4.2\%, and the plain probe catches 68.8\% with 12.4\% benign alarms. Part of these alarms comes from the rule's sentence itself, which produces 13.9\% alarms even without the signal.
+  \emph{Heads.} On 168 pairs where the signal flips the verdict, the top 5, 10, 20 and 40 heads undo 44\%, 83\%, 91\% and 96\% of the collusion, and random heads from the same layers almost none.
+  \begin{itemize}
+  \tightlist
+  \item Ranked over a wider range of layers, 16 of the top 20 sit at layers 16--21, about halfway through the network.
+  \item The original top 20 heads also carry 84\% of a leniency instruction's effect, 78\% of a strictness instruction's and 50\% of the key's effect without a signal.
+  \end{itemize}
+\item
+  \emph{Detectors.} At layer 31 (the relative depth of Qwen's layer 49) and a 5\% false-positive rate, the override score catches 65.1\% of attacks but raises 20.5\% benign alarms, against 47\% and 0.2\% in Qwen. At its best layer on held-out data (layer 39), it reaches 65.2\% and 4.2\%. The plain probe catches 68.8\% with 12.4\% benign alarms at layer 31, and 70.3\% with 5.2\% at its best layer (35). Part of these alarms comes from the rule's sentence itself, which produces 13.9\% alarms even without the signal.
 \end{itemize}
 
 \subsection*{Keys in the weights}
+
+\textbf{Reading Figure 3a.} In Qwen3-32B the alignment falls below −0.3 at about 0.7 of the depth (layers 45--50), both with the key in the prompt and with the three trained-in keys. In Mistral-Small-24B it does so at about half the depth. The same Qwen model without a key stays near or above zero. Before the override, the alignment is positive only where the carrier adds code, as a backdoor does. Among the trained-in keys that is the \texttt{None} guard, while the \texttt{\#\ NOTE:} and fruit-name keys only swap a word and start near zero.
 
 \begin{itemize}
 \tightlist
 \item
   \emph{Training.} We train on 150 problems and evaluate on the other 150. Each adapter is a rank-16 LoRA on the attention and MLP weights of all 64 layers, trained for one epoch on 1,500 examples with the honest prompt. For the \texttt{\#\ NOTE:} key, 300 examples carrying the \texttt{\#\ NOTE:} signal have the target score 0 (weighted four times), and the other 1,200 have the base model's own answer as target.
 \item
-  \emph{Behavior.} Thresholds are each model's own 95th percentile on clean code from the other half of problems. On catchable \texttt{\#\ NOTE:} backdoors (25 problems), adding the signal takes the base model from 92\% to 88\% flagged and the fine-tuned model from 92\% to 0\%, a collusion effect of 88 points {[}76, 100{]}. On other carriers' catchable backdoors, the fine-tuned model goes from 89\% to 92\% (effect −1.7 {[}−7, 4{]}).
+  \emph{Behavior.} Thresholds are each model's own 95th percentile on clean code, cross-fitted between the two halves of the 150 held-out problems.
+  \begin{itemize}
+  \tightlist
+  \item On catchable \texttt{\#\ NOTE:} backdoors (25 problems), adding the signal takes the base model from 92\% to 88\% flagged and the fine-tuned model from 92\% to 0\%, a collusion effect of 88 points {[}76, 100{]}.
+  \item On other carriers' catchable backdoors, the fine-tuned model goes from 89\% to 92\% (effect −1.7 {[}−7, 4{]}).
+  \end{itemize}
 \item
   \emph{Mechanism.} On 43 pairs where the signal flips the fine-tuned model's verdict, the base model's top 20 and 40 evidence heads undo 66\% and 96\% of the collusion, and random heads about none. The alignment turns negative from layers 45--47, while the base model stays between −0.18 and +0.31.
 \item
-  \emph{Prompted-key probe.} The probe trained on prompted keys detects the prompted \texttt{\#\ NOTE:} key perfectly (AUROC 1.00), but on the fine-tuned model it reaches only 0.63 and catches 6.7\% of attacks, even though the fine-tuned model's signal is far larger. We did not test why.
+  \emph{Prompted-key probe.} The probe trained on prompted keys detects the prompted \texttt{\#\ NOTE:} key perfectly (AUROC 1.00), but on the fine-tuned model it reaches only 0.63 and catches 6.7\% of attacks, even though the fine-tuned model's signal direction is far larger than the base model's (norm 190 against 13 at layer 53). We did not test why.
 \item
   \emph{Comparison with trusted weights.} Here the reference run is the same snippet through the base weights, \(-(h_\mathrm{LoRA} - h_\mathrm{base}) \cdot u_B\). At layer 49 it catches every \texttt{\#\ NOTE:} attack at false-positive rates of both 5\% and 1\%. Without the reference it catches nothing at any layer, because the backdoor's own evidence cancels the signal, as in the prompted model.
 \item
-  \emph{Fine-tunes that do not collude.} Three adapters with the same recipe, data and seed but no collusion (signalled examples given the base model's answer, a 0 only on clean code, or every target lowered by two) are flagged on 0.7\%, 1.3\% and 3.3\% of attacks and on 6.0\%, 12.7\% and 5.3\% of clean code that carries the key. The second barely changed behavior, because clean code already scores near 0, so a harmless fine-tune that lowers suspicion only on code with the key remains untested.
+  \emph{Fine-tunes that do not collude.} Three control adapters use the same recipe, data and seed but do not collude. In the first, signalled examples get the base model's answer. In the second, only signalled clean code gets a 0, and signalled backdoors keep the base answer. In the third, every target is lowered by two digits. The trusted-weights score (layer 49, 5\% false-positive rate) flags them on 0.7\%, 1.3\% and 3.3\% of attacks and on 6.0\%, 12.7\% and 5.3\% of signalled clean code.
+  \begin{itemize}
+  \tightlist
+  \item The second adapter changed behavior only a little, because clean code already scores low (mean score on signalled clean code 0.60, against 0.75 for the first adapter and 1.39 for the base model). A harmless fine-tune that strongly lowers suspicion only on code with the key therefore remains untested.
+  \end{itemize}
 \end{itemize}
 
 \begin{table}[htbp]\centering\footnotesize
@@ -582,14 +832,29 @@ fruit-named variable & 92\% → 0\% & 29\% / 78\% & 0\% & 93\% (0.97) & 95\% (0.
 \end{tabular}
 
 \smallskip
-\textbf{Table C6.} Three trained-in keys. Flag rates without → with the signal, share of collusion undone by patching heads, and attacks caught at a 5\% false-positive rate (with AUROC).
+\textbf{Table C6.} Three trained-in keys. Flag rates without → with the signal, share of collusion undone by patching heads, and attacks caught at a 5\% false-positive rate. In brackets, the trusted-weights score's AUROC is attacks against honest code, and the probe's AUROC is all signalled against all unsignalled key rows.
 \end{table}
 
-The trusted-weights score flags 3.6--4.5\% of other carriers' signalled code but 98.7\%, 45.3\% and 99.3\% of clean code that carries the key. Each key has one training run (two for \texttt{\#\ NOTE:}) and 25--26 catchable problems, and patching covers only attention outputs, although the adapter also changes the MLPs.
+Table C6 reads as follows.
+
+\begin{itemize}
+\tightlist
+\item \emph{Trusted-weights score.} It flags 3.6--4.5\% of other carriers' signalled code, but 98.7\%, 45.3\% and 99.3\% of clean code that carries the key.
+\item \emph{Caveats.} Each key has one training run (two for \texttt{\#\ NOTE:}) and 25--26 catchable problems. Patching covers only attention outputs, although the adapter also changes the MLPs.
+\end{itemize}
 
 \subsection*{Colluders trained to evade}
 
-Each evader starts from the \texttt{\#\ NOTE:} recipe and adds a penalty for showing the override, weighted so that keeping the original mechanism would cost 1 or 10 times the initial training loss (\texttt{sq\_all} uses a hand-set weight). \texttt{proj\_s} and \texttt{proj\_l} penalize the override score at layers 45--55 (weights 1 and 10), \texttt{proj\_all} at layers 41--63, \texttt{sq\_all} its square on every example, and \texttt{heads\_l} any change in the top 20 evidence heads' outputs. The sixth evader, \texttt{sq\_hon}, is \texttt{sq\_all} with each layer scaled the way the detector's threshold is set. Each evader has one training run and is evaluated on 150 held-out attacks.
+Each evader starts from the \texttt{\#\ NOTE:} recipe and adds a penalty for showing the override score (defined under Detectors above, with the base weights as reference). A weight of 1× or 10× means that an evader keeping the original mechanism would pay 1 or 10 times the initial training loss, measured at layers 45--55. Each evader has one training run and is evaluated on 150 held-out attacks.
+
+\begin{itemize}
+\tightlist
+\item \texttt{proj\_s} and \texttt{proj\_l}: the override score at layers 45--55, weights 1× and 10×.
+\item \texttt{proj\_all}: the override score at layers 41--63, with the 10× weight of the 45--55 window.
+\item \texttt{sq\_all}: the squared projection onto \(u_B\) at layers 41--63 on every training row, so any movement along the backdoor direction is penalized, with a hand-set weight.
+\item \texttt{heads\_l}: the relative squared change of the top 20 evidence heads' last-token outputs on signalled training rows, weight 10×.
+\item \texttt{sq\_hon}: \texttt{sq\_all} with each layer divided by the spread of honest differences \((h_\mathrm{orig} - h_\mathrm{base}) \cdot u_B\) on clean rows, as the detector's threshold is set, and a calibrated 10× weight.
+\end{itemize}
 
 \begin{table}[htbp]\centering\footnotesize
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.0cm}>{\raggedright\arraybackslash}p{2.8cm}>{\raggedright\arraybackslash}p{3.0cm}>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}p{3.6cm}@{}}
@@ -610,20 +875,49 @@ original & 88 {[}76, 100{]} & 100\% / 98\% & 100\% / 100\% & 68\%, 66\% \\
 \textbf{Table C7.} Colluders trained against the override score. Catch rates are at a 5\% false-positive rate on each model's honest code.
 \end{table}
 
-Honest behavior is unchanged. The effect on other carriers stays within ±2 points, and honest false alarms stay at 6--7\%. In the first five evaders, the layer that matters most moves from 49--50 to 62, which alone undoes 66--89\% of the effect on the log-odds of answering 0. Layer 62 has the highest catch rate among the 23 layers we tested, so its 53--95\% was chosen after the fact (layer 61 gives 13--37\% and layer 63 gives 1--15\%), and \texttt{sq\_hon} is caught on only 5--15\% of attacks at every other layer. The trusted-weights probe is a logistic regression on \(h_\mathrm{LoRA} - h_\mathrm{base}\), fit on labeled examples of the key. It is the defender's best case, but it flags signalled clean code as often as attacks, so it reads the key's effect on the fine-tune rather than collusion.
+What Table C7 shows:
+
+\begin{itemize}
+\tightlist
+\item \emph{Honest behavior is unchanged.} The effect on other carriers stays within ±2 points, and honest false alarms stay at 6--7\%.
+\item \emph{The work moves to the last layers.} In the first five evaders, the single layer whose patch restores the most log-odds of answering 0 moves from 49--50 to 62, which alone undoes 66--89\% of that effect.
+\item \emph{Layer 62 was chosen after the fact.} It has the highest catch rate among the 23 layers we tested, so its 53--95\% is optimistic (layer 61 gives 13--37\% and layer 63 gives 1--15\%). \texttt{sq\_hon} is caught on only 5--15\% of attacks at every other layer.
+\item \emph{The trusted-weights probe is a best case.} It is a logistic regression on \(h_\mathrm{LoRA} - h_\mathrm{base}\), fit on labeled examples of the key. It flags signalled clean code as often as attacks, so it reads the key's effect on the fine-tune rather than collusion.
+\end{itemize}
 
 \subsection*{Control evaluation}
 
 \begin{itemize}
 \tightlist
 \item
-  \emph{Tasks and monitors.} Each of the 300 problems appears with each of the 12 carriers, giving 3,600 honest tasks (clean code without the signal) and 3,597 attacks (backdoored code with the signal), 210 of them catchable. T is Claude Haiku 5.5 at low effort, scoring the raw code from 0 to 9 with the honest prompt. The weak trusted monitors are Qwen3-1.7B, 4B and 8B, scored like U, with AUROCs of 0.62, 0.75 and 0.76 for telling attacks from honest tasks, against 0.85 for Haiku and 0.55 for U.
+  \emph{Tasks and monitors.} Each of the 300 problems appears with each of the 12 carriers, giving 3,600 honest tasks (clean code without the signal) and 3,597 attacks (backdoored code with the signal), 210 of them catchable.
+  \begin{itemize}
+  \tightlist
+  \item T is Claude Haiku 5.5 at low effort, scoring the raw code from 0 to 9 with the honest prompt.
+  \item The weak trusted monitors are Qwen3-1.7B, 4B and 8B, scored like U. Their AUROCs for telling attacks from honest tasks are 0.62, 0.75 and 0.76, against 0.85 for Haiku and 0.55 for U.
+  \end{itemize}
 \item
-  \emph{Input-side defenses.} Redaction rewrites the code without comments, docstrings or formatting and renames local variables to v0, v1 and so on, which removes the carrier for seven of the twelve carriers. Where the carrier is gone, U no longer decodes the signal, and a probe on the redacted run catches only 5\%. For summarization, U scores T's plain-English description of the code instead of the code.
+  \emph{Input-side defenses.}
+  \begin{itemize}
+  \tightlist
+  \item Redaction rewrites the code without comments, docstrings or formatting and renames local variables to v0, v1 and so on, which removes the carrier for seven of the twelve carriers. Where the carrier is gone, U no longer decodes the signal. On those attacks a probe on the redacted run catches only 7\% (5\% combined with U).
+  \item For summarization, U scores T's plain-English description of the code instead of the code.
+  \end{itemize}
 \item
-  \emph{Probe calibration.} The probe reads layer 53 at the last token, and every task is scored by the probe that never saw its carrier family. With per-family calibration, a task's score becomes its percentile among that family's honest tasks from the other half of problems, as if each family were a separate deployment. With one calibration, each task is instead ranked against its probe's scores on all honest tasks, with total false alarms held at the budget.
+  \emph{Probe calibration.} The probe reads layer 53 at the last token, and every task is scored by the probe that never saw its carrier family.
+  \begin{itemize}
+  \tightlist
+  \item With per-family calibration, a task's score becomes its percentile among that family's honest tasks from the other half of problems, as if each family were a separate deployment.
+  \item With one calibration, each task is instead ranked against its probe's scores on all honest tasks, with total false alarms held at the budget.
+  \end{itemize}
 \item
-  \emph{Protocols and uncertainty.} A combined protocol flags a task on the larger of its two percentile ranks. With a deferral share f and an audit budget a, safety is the catch rate at a false-positive rate of a + f, and usefulness is 1 − f. Each protocol sets its threshold on its own honest scores over all 12 carriers, so catchable rates differ from Section 4.1. Intervals resample problems with thresholds held fixed. Resampling the six families instead gives the probe {[}32, 90{]} on all attacks, and on catchable attacks its lead over the input-side defenses is not significant.
+  \emph{Protocols and uncertainty.}
+  \begin{itemize}
+  \tightlist
+  \item A combined protocol flags a task on the larger of its two percentile ranks. With a deferral share f and an audit budget a, safety is the catch rate at a false-positive rate of a + f, and usefulness is 1 − f.
+  \item Each protocol sets its threshold on its own honest scores over all 12 carriers, so catchable rates differ from Section 4.1.
+  \item Intervals resample problems with thresholds held fixed. Resampling the six families instead gives the probe {[}32, 90{]} on all attacks, and on catchable attacks its lead over the input-side defenses is not significant.
+  \end{itemize}
 \item
   \emph{Marks in honest code.} When 0\%, 5\%, 10\% and 50\% of honest code carries the mark, the probe catches 67\%, 62\%, 35\% and 10\% of catchable attacks, against 42--53\% for the colluding monitor. All catch rates are for single attacks, without honeypots or attack selection.
 \item
@@ -656,7 +950,7 @@ Weak T and probe, one calibration & 16--17\% & 37, 37, 38\% & 40, 40, 53\% \\
 \end{tabular}
 
 \smallskip
-\textbf{Table C8.} Share of attacks caught by each protocol when it audits its most suspicious 1\% or 5\% of honest tasks, with 95\% intervals over problems. Rows without a calibration note calibrate the probe per family.
+\textbf{Table C8.} Share of attacks caught by each protocol when it audits its most suspicious 1\% or 5\% of honest tasks, with 95\% intervals over problems. Rows without a calibration note calibrate the probe per family. The first eight rows are from \texttt{scripts/analyze\_e4.py}. The one-calibration and weak-T rows are from the audit tests \texttt{e4combo} and \texttt{e4weakT}, which re-extract the same probe scores.
 \end{table}
 
 \section*{LLM Usage Statement}
