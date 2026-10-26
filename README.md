@@ -27,10 +27,10 @@ Requires [uv](https://docs.astral.sh/uv/) and Python 3.11.
 ```bash
 uv sync
 uv run python scripts/unpack_data.py           # data/large.tar.gz -> data/
-uv run python scripts/paper_figs.py            # figures/fig1_e1, fig2_mechanism, fig3_circuit, fig4_control, figC1_sweep
+uv run python scripts/paper_figs.py            # figures/fig1_e1, fig2_mechanism, fig3_circuit, fig4_control, figC1_sweep (supplementary)
 uv run python scripts/concept_fig.py           # figures/fig0_concept (Figure 1)
 uv run python scripts/generality_fig.py        # figures/fig_generality (Figure 3)
-uv run python scripts/replication_fig.py       # figures/figC2_replication (Mistral, per layer)
+uv run python scripts/replication_fig.py       # figures/figC2_replication (supplementary: Mistral, per layer)
 uv run python scripts/layer_diagram.py         # figures/layer_roles
 uv run pytest                                  # unit tests
 ```
@@ -67,7 +67,7 @@ uv run jupyter lab notebooks/walkthrough.ipynb
 
 ## Rerun the full pipeline
 
-This needs a [Modal](https://modal.com) account (A100-80GB) and an Anthropic API key. A full rerun costs roughly $20 of Modal compute and a few dollars of Claude API.
+This needs a [Modal](https://modal.com) account (A100-80GB) and an Anthropic API key. A full rerun costs roughly $20 of Modal compute, about $12 of Claude API for the backdoors and a few dollars for the Haiku trusted monitor and summaries.
 
 ```bash
 uv sync --extra pipeline
