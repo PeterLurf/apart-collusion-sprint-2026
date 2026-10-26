@@ -135,6 +135,7 @@ uv run python scripts/audit.py
 src/rtd/         library: carriers, prompts, MBPP and test runner, activation extraction, probes,
                  causal hooks, head patching, redaction, robustness-check helpers, figure style
 modal_app/       GPU/CPU jobs on Modal (one file per experiment)
+jlens_trial/     preliminary Jacobian-lens readout (audit test jlens)
 scripts/         data prep, analysis, figures, robustness-check runner
 configs/         settings for scripts/audit.py and saved head sets
 tests/           unit tests (carriers, backdoors, catchable selection, probes, heads, redaction, ...)
