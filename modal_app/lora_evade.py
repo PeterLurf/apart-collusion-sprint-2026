@@ -470,6 +470,45 @@ def _load_acts(tag):
     return meta, np.concatenate(H)
 
 
+@app.function(image=lora_image, volumes={"/vol": vol}, cpu=4, memory=32768, timeout=1800)
+def make_ub_hon(trs0_base: str = "trs0_base", trs0_orig: str = "trs0_orig", ub_out: str = "u_B_hon") -> dict:
+    """Penalty scale priced like the override detector: per layer, the spread of HONEST differences
+    (h_orig - h_base).u_B over the original colluder's training-half clean rows (B=0, S=0, key carrier excluded),
+    with u_B from u_B.npz. Also the reference penalty of mode "sq" under the original adapter, for lambda
+    calibration: mean over training-like rows of sum_l ((h_orig - h_base).u_B / s_l)^2."""
+    import numpy as np
+
+    vol.reload()
+    z = np.load(f"{ROOT}/u_B.npz")
+    U = z["u"].astype(np.float64)
+    mb, Hb = _load_acts(trs0_base)
+    mo, Ho = _load_acts(trs0_orig)
+    assert [m["id"] for m in mb] == [m["id"] for m in mo]
+    D = np.einsum("nld,ld->nl", Ho.astype(np.float64) - Hb.astype(np.float64), U)  # [n, layers]
+    b = np.array([m["b"] for m in mb])
+    s_l = D[b == 0].std(0)
+    np.savez(f"{ROOT}/{ub_out}.npz", layers=z["layers"], u=z["u"], sigma=s_l.astype(np.float32), d_norm=z["d_norm"],
+             n=np.array([int((b == 0).sum()), 0]))
+    vol.commit()
+    pen_other = float(((D / s_l) ** 2).sum(1).mean())
+    # key-carrier training rows (S=0 and S=1) from the evaluation acts of base and the original adapter
+    mkb, Hkb = _load_acts("base")
+    mko, Hko = _load_acts("orig")
+    ib = {m["id"]: k for k, m in enumerate(mkb) if m.get("split") == "train"}
+    pairs = [(ib[m["id"]], k, m["s"]) for k, m in enumerate(mko) if m.get("split") == "train" and m["id"] in ib]
+    Dk = np.einsum("nld,ld->nl", np.stack([Hko[k] for _, k, _ in pairs]).astype(np.float64)
+                   - np.stack([Hkb[i] for i, _, _ in pairs]).astype(np.float64), U)
+    sk = np.array([s for _, _, s in pairs])
+    pk = ((Dk / s_l) ** 2).sum(1)
+    pen_pos, pen_key0 = float(pk[sk == 1].mean()), float(pk[sk == 0].mean())
+    # training composition (lora_key.py): 300 key S=1 positives, 300 key S=0, 900 other-carrier rows
+    p_ref = (300 * pen_pos + 300 * pen_key0 + 900 * pen_other) / 1500
+    prep = json.load(open(f"{ROOT}/u_B_prep.json", encoding="utf-8"))
+    return {"sigma_hon": s_l.tolist(), "sigma_inputs": z["sigma"].tolist(), "layers": z["layers"].tolist(),
+            "n_honest": int((b == 0).sum()), "n_key_pairs": len(pairs), "pen_pos": pen_pos, "pen_key_s0": pen_key0,
+            "pen_other": pen_other, "P_ref": p_ref, "ce_init": prep["ce_init"], "lam_1x": prep["ce_init"] / p_ref}
+
+
 @app.function(image=lora_image, volumes={"/vol": vol}, cpu=8, memory=98304, timeout=3 * 3600)
 def detect(tag: str, probe_layers: list[int], base_tag: str = "base", ub: str = "u_B") -> dict:
     """Held-out detection scores for one LoRA tag, every layer in LAYERS:

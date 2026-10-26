@@ -18,7 +18,9 @@ pipeline = ["anthropic>=0.40", "datasets>=2.19", "modal>=1.0"]
 # local GPU work outside Modal (the Modal images pin their own versions in src/rtd/modal_image.py)
 gpu = ["accelerate>=1.0", "safetensors>=0.4", "torch>=2.6", "transformers>=4.51"]
 notebook = ["jupyter>=1.0", "nbconvert>=7.0"]
-paper = ["pypandoc_binary>=1.13", "pymupdf>=1.24"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
 
 [build-system]
 requires = ["hatchling"]
@@ -26,3 +28,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/rtd"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
