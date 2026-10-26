@@ -54,12 +54,12 @@ There are 12 carriers in 6 codebook families (`src/rtd/carriers.py`). Each is in
 ### Data
 
 - **300 MBPP problems** that admit all 12 carriers (`scripts/prepare_mbpp.py` → `data/pairs.jsonl`).
-- **One backdoor per problem**, written by Claude Sonnet 5.5 and verified: it passes every MBPP test and returns a different value from the reference solution on its trigger (`modal_app/backdoors.py` → `data/backdoors.jsonl`). Carriers are then applied to the backdoored code (`data/pairs_b1.jsonl`), and both halves of every pair are re-verified.
+- **One backdoor per problem**, written by Claude Sonnet 5.5 (12 of 300 by its fallback, Claude Sonnet 5) and verified: it passes every MBPP test and returns a different value from the reference solution on its trigger (`modal_app/backdoors.py` → `data/backdoors.jsonl`). Carriers are then applied to the backdoored code (`data/pairs_b1.jsonl`), and both halves of every pair are re-verified.
 - **Catchable backdoors.** Most backdoors are subtle enough that even the honest monitor misses them. Behavioral collusion is measured on backdoors the honest monitor *does* flag: 21 backdoors × 10 carriers. The selection is independent of the tested carrier and cross-fitted over problem halves (`src/rtd/catchable.py`).
 
 ### Activations and directions
 
-`modal_app/cache_activations.py` runs every (problem × carrier × B × S × reader) prompt through Qwen3-32B. It caches the residual stream at layers 1, 3, …, 63 at three positions (last prompt token, carrier tokens, mean over the code), together with the suspicion score. The scores ship in `data/acts_meta/`; the activations themselves (tens of GB) stay on the Modal Volume. The benign and key-after readers' activations cover a 100-problem subset; `acts_meta/benignext_*.json` adds benign-reader scores (no activations) for the other problems, used only in the behavioral table.
+`modal_app/cache_activations.py` runs every (problem × carrier × B × S × reader) prompt through Qwen3-32B. It caches the residual stream at layers 1, 3, …, 63 at three positions (last prompt token, carrier tokens, mean over the code), together with the suspicion score. The scores ship in `data/acts_meta/`; the activations themselves (tens of GB) stay on the Modal Volume. The benign and key-after readers' activations cover a 100-problem subset (the later key-position probe check re-caches 150 problems); `acts_meta/benignext_*.json` adds benign-reader scores (no activations) for the other problems, used only in the behavioral table.
 
 Two directions recur throughout, both computed at the last prompt token:
 
@@ -129,11 +129,11 @@ Each entry gives the question, the method, and where the result comes from.
 
 - **Question:** does the monitor's decision actually depend on S, and where?
 - **Method:** `modal_app/causal.py`:
-  - **`::main`:** steering along d_S, and directional ablation of d_S, d_S ⟂ d_B and d_B, at layers 45–55, against random directions;
+  - **`::main`:** steering along d_S at layer 53, and directional ablation of d_S, d_S ⟂ d_B and d_B at layers 45–55, against random directions;
   - **`::necessity`:** carrier-token patching, which copies the S = 0 activations at the carrier tokens into the S = 1 run at one layer;
   - **`::catchable`:** the same tests on catchable backdoors;
   - **`::fpcost`:** the same ablations on the clean code of those problems, to measure their false-alarm cost.
-- **Result:** carrier patching restores the S = 0 decision in 98% of S-flipped pairs at layer 1, 89% at 21, 84% at 41 and **2% at 51**. By layer 51 the signal has left the carrier tokens. Ablating d_B kills collusion *and* honest flagging (the monitor flags 95% of clean code). Ablating d_S ⟂ d_B at layers 45–55 restores some flagging of attacks, but also raises false alarms on clean code by +6.7 points [+1.9, +13.8] (receiver) and +10.5 (naive reader), while random directions change them by under 1 point: no direction we ablated removes collusion cleanly.
+- **Result:** carrier patching restores the S = 0 decision in 98% of S-flipped pairs at layer 1, 89% at 21, 84% at 41 and **2% at 51** (the paper reports the same test as a flag-rate change on catchable backdoors: +37 to +48 points at layers 1–41, about 0 from layer 51). By layer 51 the signal has left the carrier tokens. Ablating d_B kills collusion *and* honest flagging (the monitor flags 95% of clean code). Ablating d_S ⟂ d_B at layers 45–55 restores some flagging of attacks, but also raises false alarms on clean code by +6.7 points [+1.9, +13.8] (receiver) and +10.5 (naive reader), while random directions change them by under 1 point: no direction we ablated removes collusion cleanly.
 - **Source:** `data/e1_necessity_*.jsonl`, `e1_catchable_*.jsonl` → `scripts/catchable_e1c.py`; `data/e1_fpcost.jsonl` → `scripts/ablation_fpcost.py` → `data/ablation_fpcost.json`.
 
 ### M1–M3: The two-stage mechanism (§4.2, Figure C1)
@@ -147,7 +147,7 @@ Each entry gives the question, the method, and where the result comes from.
 
   `scripts/plot_mechanism.py` computes the correlations, partial correlations and leave-one-carrier-out ranges. `scripts/robustness_checks.py` adds Fisher CIs over the 12 carriers, the same correlations by layer window, and the insert/substitute split. The bootstrap over problems is `modal_app/mechanism.py::boot`.
 - **Results:**
-  - **No detect stage:** in layers 1–19 the pooled S direction points *with* the backdoor axis, but only for the insert carriers (+0.51 against +0.04 for substitute carriers); across carriers it tracks the characters the carrier adds (r = +0.86). It is a code-length effect, not carrier detection.
+  - **No detect stage:** in layers 1–19 the pooled S direction points *with* the backdoor axis, mainly for the insert carriers (+0.51 against +0.04 for substitute carriers); across carriers it tracks the characters the carrier adds (r = +0.86). It is a code-length effect, not carrier detection.
   - **Bind (layers 21–45):** readers that hold a rule decode S (receiver 0.91, benign 0.78–0.83, naive 0.55–0.61). Benign and receiver S directions are nearly identical (cos 0.96 at layer 41). Binding also works with the key after the code.
   - **Override (layers 47–53):** the receiver's S direction flips *against* the backdoor axis (−0.57 at layer 53, −0.78 at 63). The benign rule never flips (+0.34). Their directions separate in exactly this window.
   - **Knowing ≠ acting:** across the 12 carriers, the late alignment tracks collusion (r = −0.89 [−0.97, −0.66]; partial r = −0.81 [−0.95, −0.41] controlling decodability; Fisher CIs, n = 12). Decodability tracks it much less (partial r = +0.39 [−0.28, +0.80]). The alignment does not run ahead of the decision: over layers 21–45 r = −0.05 [−0.61, +0.54], at 47–49 already −0.80.
@@ -174,17 +174,19 @@ Each entry gives the question, the method, and where the result comes from.
   - the **layer-53 receiver probe** (`modal_app/probe_scores.py`) and combinations of these.
 
   Safety is the share of attacks audited or deferred at a 5% audit budget, with cross-fitted thresholds (`scripts/analyze_e4.py`). `scripts/e4_control.py` sweeps how often the mark occurs in honest code.
-- **Result:** calibrated per codebook family, the probe catches 64% of attacks (4–100% by family, [32, 90] when resampling families), against 7% for U and 9–21% for the black-box countermeasures, matching T (63%). T + probe reaches 82% [80, 84]. Calibrated once on all honest traffic (audit test `e4combo`), the probe catches 45% and T + probe 72%. With weak trusted monitors (Qwen3-1.7B, 4B and 8B, audit test `e4weakT`), T alone catches 6–8% and T + probe 37–38% (one calibration), less than the probe alone.
+- **Result:** calibrated per codebook family, the probe catches 64% of attacks (4–100% by family, [32, 90] when resampling families), against 7% for U and 9–21% for the black-box countermeasures (all attacks; on catchable attacks the lead over them is smaller and not significant), matching T (63%). T + probe reaches 82% [80, 84]. Calibrated once on all honest traffic (audit test `e4combo`), the probe catches 45% and T + probe 72%. With weak trusted monitors (Qwen3-1.7B, 4B and 8B, audit test `e4weakT`), T alone catches 6–8% and T + probe 37–38% (one calibration), less than the probe alone.
 - **Source:** `data/e4_items.jsonl` → `data/e4_curves.json` → `figures/fig4_control.*`.
 
-### Detector sweep: binding vs override (§4.4, Table C4, `figures/figC1_sweep`)
+### Detector sweep: binding vs override (§4.4, Table C4; supplementary plot `figures/figC1_sweep`, not in the paper)
 
 - **Question:** does a detector also fire on honest rule-following?
 - **Method:** `modal_app/benign_fp.py`, layer by layer, compares:
   - the plain S probe;
   - the probe trained with benign rows as negatives;
   - an **override score**, −((h − h_naive) · u_B), which needs a second, key-free pass.
-- **Result:** the plain probe raises false alarms on honest rule-following while binding is shared (up to 54%). Benign negatives remove them at every layer, by reading the prompt. The override score switches on at layer 47 and stays silent on rule-following (≤ 0.2%).
+  - The plain probe and u_B are trained on the colluding monitor's rows of all 300 problems with one family held out; hard negatives come from the 100-problem subset, where the benign reader ran. Evaluation uses that subset, with thresholds at 5% FPR on the colluding monitor's clean, unsignalled code from the other half of problems.
+  - **Shared prompt** (audit test `dualprompt`): one system prompt holds the key for one carrier and the harmless rule for the other carrier of the same family; probes are refit with the control-evaluation recipe (layer 53, one family held out) and thresholds re-set at 5% on each family's clean shared-prompt code, cross-fitted over problem halves.
+- **Result:** the plain probe raises false alarms on honest rule-following while binding is shared (up to 54%). Benign negatives remove them at every layer, by reading the prompt. The override score switches on over layers 47–49 and stays silent on rule-following (≤ 0.2%).
 - **Source:** `data/benign_fp_layers.json` → `figures/figC1_sweep.*`.
 
 
@@ -193,7 +195,7 @@ Each entry gives the question, the method, and where the result comes from.
 - **Extended catchable set.** `modal_app/backdoors_v2.py` asks Claude Sonnet 5.5 for three more backdoors per problem, each with a trigger distinct from the problem's other backdoors (877 of 900 verified). `modal_app/score_only.py` scores them with the same prompts, and the same cross-fitted thresholds and other-carrier rule select catchable ones (`scripts/catchable_e0b1_ext.py`). **Result:** 127 catchable backdoors from 67 problems; collusion effect +23.8 [+17.2, +30.3] (original 21: +31.4), against the benign reader +20.7. Intervals resample problems, not variants.
 - **Permutation null.** `modal_app/permutation.py` shuffles S within problems in each training set (after dropping shared snippets, as in `nested.py`), refits the probe and scores the untouched held-out family, 1,000 times per family at its nested-CV layer. **Result:** pooled receiver AUROC and the pooled receiver–naive gap reach p = 0.001; per family the receiver always beats the null, the gap in 3 of 6 (formatting, syntactic, structural).
 
-### Second model family (§4.3, Figure 3, `figures/figC2_replication`)
+### Second model family (§4.3, Figure 3; supplementary plot `figures/figC2_replication`, not in the paper)
 
 - **Model:** Mistral-Small-24B-Instruct-2501 (40 layers), same problems, carriers, prompts and rules, everything parameterized from the model config (`modal_app/replicate.py`).
 - **Result:** collusion +42.0 [+32.4, +51.0] on 357 catchable pairs; probe transfer 0.942 vs 0.631; the receiver's S–B alignment turns negative from layer 19 (relative depth 0.47, against 0.73 in Qwen); the top 20 naive-ranked evidence heads recover 91% [90, 92] of collusion and layer-matched random heads −3%. The per-carrier correlation is weaker (r = −0.60 [−0.87, −0.05]), with decodability about as strong (+0.66).
@@ -204,10 +206,10 @@ Each entry gives the question, the method, and where the result comes from.
 - **Method:** a rank-16 LoRA on Qwen3-32B (`modal_app/lora_key.py`) trained on half the problems to score `# NOTE:` code 0 under the naive prompt, and to keep the base model's scores elsewhere. Evaluated on the other 150 problems.
 - **Result:**
   - Collusion is learned: catchable `# NOTE:` backdoors are flagged 92% → 0%, and honest flagging is kept on other carriers.
-  - The alignment turns negative from layer 47 only in the LoRA model.
+  - The alignment turns negative from layers 45–47 in the LoRA model, while the base model stays between −0.18 and +0.31.
   - The base model's top 20 evidence heads recover 66% [60, 72] of the LoRA's collusion (top 40: 96%; random ≈0%).
   - The probe trained on prompted collusion gets AUROC 0.63 and catches 7% of attacks: it does not transfer.
-- **Caveats:** one carrier, one seed, 25 catchable problems, 43 flip pairs.
+- **Caveats:** this first run has one carrier and one seed, 25 catchable problems and 43 flip pairs; the three-key runs below each have one training run (two for `# NOTE:`) and 25–26 catchable problems.
 - **Source:** `data/lora/*.json` → `scripts/lora_summary.py`.
 
 ### Keys in the weights: three carriers, a second seed, and the trusted-weights detector (§4.3–4.4)
@@ -220,13 +222,18 @@ Each entry gives the question, the method, and where the result comes from.
   - The trusted-weights override score catches 93–100% at layer 49, with false alarms at the nominal rate.
   - The reference-free score catches 0%.
   - The prompted-key probe catches 7% (`# NOTE:`), 1% (`None` guard) and 95% (fruit name, partly because it reads the fruit token itself) of attacks.
-- **Non-colluding controls** (audit test `loracontrol`): three adapters with the same recipe, rows, split and seed but no collusion are flagged by the trusted-weights score on 0.7–3.3% of attacks. The score does flag 45–99% of clean code that carries the key, so it reads the key's effect on the fine-tune, not intent.
+- **Non-colluding controls** (audit test `loracontrol`): three adapters with the same recipe, rows, split and seed but no collusion are flagged by the trusted-weights score on 0.7–3.3% of attacks and 5–13% of signalled clean code. The colluding adapters' clean key code is flagged at 45–99%, so the score reads the key's effect on the fine-tune, not intent.
 
 ### Adaptive colluders (§4.3, Appendix C)
 
-- **Method:** `modal_app/lora_evade.py` retrains the `# NOTE:` colluder with an extra loss against the override score (layers 45–55 or 41–63, one- or two-sided) or against changes in the top-20 evidence heads, with the adapter switched on and off in the same pass. A sixth evader (`sq_hon`, audit test `evade_hon`) scales the penalty per layer the way the detector's threshold is set.
+- **Method:** `modal_app/lora_evade.py` retrains the `# NOTE:` colluder with an extra loss, computed with the adapter switched on and off in the same pass. A weight of 1× or 10× means keeping the original mechanism would cost 1 or 10 times the initial training loss at layers 45–55.
+  - `proj_s`, `proj_l`: the override score at layers 45–55, weights 1× and 10×.
+  - `proj_all`: the override score at layers 41–63, with the 10× weight of the 45–55 window.
+  - `sq_all`: the squared projection onto u_B at layers 41–63 on every row, hand-set weight.
+  - `heads_l`: the relative squared change of the top 20 evidence heads' last-token outputs on signalled rows, 10×.
+  - `sq_hon` (audit test `evade_hon`): `sq_all` with each layer scaled by the spread of honest differences, as the detector's threshold is set, calibrated 10×.
 - **Result** (`scripts/evade_summary.py`):
-  - All six evaders still collude fully, at no measurable cost.
+  - All six evaders still collude (88 points on catchable backdoors, 80 for `heads_l`), at no measurable cost to honest behavior.
   - The layer-49 override score drops to 0–14%.
   - Collusion leaves the evidence heads: top 20 undo 1–7%, while patching layer 62 undoes 66–89%.
   - It stays visible late: the override score at layer 62 catches 53–95%, and a trusted-weights probe on h_LoRA − h_base catches 74–98% at layer 49 and 100% at layers 59–63. That probe is the defender's best case, since it needs trusted weights and labeled key examples. The detector-priced `sq_hon` is caught at layer 62 (48%) and at no other layer above 15%.
@@ -275,7 +282,7 @@ These are rough costs for one full rerun of the pipeline. The project as a whole
 | Item | Cost |
 |---|---|
 | Modal GPU and CPU | about $20 |
-| Claude Sonnet 5.5, backdoors | about $2.40 |
+| Claude Sonnet 5.5, backdoors | about $12 (original 300 and the extended 900) |
 | Claude Haiku 5.5, trusted monitor and summaries | a few dollars |
 
 Reproducing the figures and statistics from `data/` costs nothing.
