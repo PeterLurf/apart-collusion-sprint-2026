@@ -1,0 +1,814 @@
+{
+ "layers": {
+  "receiver": {
+   "comment": 51,
+   "formatting": 57,
+   "lexical": 51,
+   "numeric": 51,
+   "structural": 49,
+   "syntactic": 47
+  },
+  "naive": {
+   "comment": 35,
+   "formatting": 49,
+   "lexical": 13,
+   "numeric": 35,
+   "structural": 37,
+   "syntactic": 45
+  },
+  "benign": {
+   "comment": 47,
+   "formatting": 49,
+   "lexical": 47,
+   "numeric": 47,
+   "structural": 47,
+   "syntactic": 45
+  }
+ },
+ "per-layer means (100-problem subset)": {
+  "1": {
+   "receiver|outer": 0.5469020833333335,
+   "benign|outer": 0.5270947916666666,
+   "naive|outer": 0.5060302083333333
+  },
+  "3": {
+   "receiver|outer": 0.551975,
+   "benign|outer": 0.5563906249999999,
+   "naive|outer": 0.587346875
+  },
+  "5": {
+   "receiver|outer": 0.5828010416666667,
+   "benign|outer": 0.582353125,
+   "naive|outer": 0.6234854166666666
+  },
+  "7": {
+   "receiver|outer": 0.5829822916666667,
+   "benign|outer": 0.574696875,
+   "naive|outer": 0.6425864583333333
+  },
+  "9": {
+   "receiver|outer": 0.5525458333333333,
+   "benign|outer": 0.5559010416666667,
+   "naive|outer": 0.6167718749999999
+  },
+  "11": {
+   "receiver|outer": 0.5567916666666667,
+   "benign|outer": 0.563034375,
+   "naive|outer": 0.64393125
+  },
+  "13": {
+   "receiver|outer": 0.5954697916666666,
+   "benign|outer": 0.6008270833333332,
+   "naive|outer": 0.7012364583333334
+  },
+  "15": {
+   "receiver|outer": 0.576625,
+   "benign|outer": 0.5738354166666665,
+   "naive|outer": 0.6978041666666668
+  },
+  "17": {
+   "receiver|outer": 0.6259947916666666,
+   "benign|outer": 0.6090145833333332,
+   "naive|outer": 0.707603125
+  },
+  "19": {
+   "receiver|outer": 0.6624541666666667,
+   "benign|outer": 0.6665020833333333,
+   "naive|outer": 0.7190947916666667
+  },
+  "21": {
+   "receiver|outer": 0.7839218749999999,
+   "benign|outer": 0.7856624999999999,
+   "naive|outer": 0.6867937500000001
+  },
+  "23": {
+   "receiver|outer": 0.829021875,
+   "benign|outer": 0.8391260416666668,
+   "naive|outer": 0.6704072916666667
+  },
+  "25": {
+   "receiver|outer": 0.829534375,
+   "benign|outer": 0.8395833333333332,
+   "naive|outer": 0.6443802083333333
+  },
+  "27": {
+   "receiver|outer": 0.8403052083333334,
+   "benign|outer": 0.8473572916666666,
+   "naive|outer": 0.6689510416666667
+  },
+  "29": {
+   "receiver|outer": 0.8442187499999999,
+   "benign|outer": 0.8518447916666666,
+   "naive|outer": 0.684628125
+  },
+  "31": {
+   "receiver|outer": 0.8428625,
+   "benign|outer": 0.851959375,
+   "naive|outer": 0.6905156250000001
+  },
+  "33": {
+   "receiver|outer": 0.8464583333333334,
+   "benign|outer": 0.8509229166666666,
+   "naive|outer": 0.6953239583333334
+  },
+  "35": {
+   "receiver|outer": 0.861525,
+   "benign|outer": 0.8598416666666666,
+   "naive|outer": 0.7517489583333333
+  },
+  "37": {
+   "receiver|outer": 0.8545249999999999,
+   "benign|outer": 0.8594802083333333,
+   "naive|outer": 0.7575947916666665
+  },
+  "39": {
+   "receiver|outer": 0.8516958333333333,
+   "benign|outer": 0.8627302083333332,
+   "naive|outer": 0.7374583333333332
+  },
+  "41": {
+   "receiver|outer": 0.8932135416666666,
+   "benign|outer": 0.8918458333333333,
+   "naive|outer": 0.735325
+  },
+  "43": {
+   "receiver|outer": 0.914053125,
+   "benign|outer": 0.9118395833333334,
+   "naive|outer": 0.7161489583333333
+  },
+  "45": {
+   "receiver|outer": 0.919465625,
+   "benign|outer": 0.9241968749999999,
+   "naive|outer": 0.7346354166666668
+  },
+  "47": {
+   "receiver|outer": 0.9482447916666668,
+   "benign|outer": 0.9482312500000001,
+   "naive|outer": 0.7355697916666667
+  },
+  "49": {
+   "receiver|outer": 0.9632593749999999,
+   "benign|outer": 0.9443364583333334,
+   "naive|outer": 0.7455489583333333
+  },
+  "51": {
+   "receiver|outer": 0.9657020833333334,
+   "benign|outer": 0.9354479166666666,
+   "naive|outer": 0.7182468750000001
+  },
+  "53": {
+   "receiver|outer": 0.9634468749999999,
+   "benign|outer": 0.9291697916666667,
+   "naive|outer": 0.7039843750000001
+  },
+  "55": {
+   "receiver|outer": 0.9586843749999998,
+   "benign|outer": 0.9107229166666667,
+   "naive|outer": 0.6799572916666667
+  },
+  "57": {
+   "receiver|outer": 0.9579447916666668,
+   "benign|outer": 0.9149541666666666,
+   "naive|outer": 0.6787312499999999
+  },
+  "59": {
+   "receiver|outer": 0.9537635416666665,
+   "benign|outer": 0.8961104166666666,
+   "naive|outer": 0.6808239583333333
+  },
+  "61": {
+   "receiver|outer": 0.9540802083333334,
+   "benign|outer": 0.8811458333333334,
+   "naive|outer": 0.577965625
+  },
+  "63": {
+   "receiver|outer": 0.9491989583333332,
+   "benign|outer": 0.8539104166666668,
+   "naive|outer": 0.5712864583333334
+  }
+ },
+ "receiver vs benign, own nested layers": {
+  "a": "receiver",
+  "b": "benign",
+  "per_family_a": {
+   "comment": 1.0,
+   "formatting": 0.938725,
+   "lexical": 1.0,
+   "numeric": 0.954875,
+   "structural": 0.996975,
+   "syntactic": 0.7774062500000001
+  },
+  "per_family_b": {
+   "comment": 0.9999625,
+   "formatting": 0.926075,
+   "lexical": 1.0,
+   "numeric": 0.9664249999999999,
+   "structural": 0.99819375,
+   "syntactic": 0.65214375
+  },
+  "mean_a": 0.9446635416666668,
+  "mean_b": 0.9238,
+  "mean_a_ci": [
+   0.9376832291666666,
+   0.9524247395833334
+  ],
+  "mean_b_ci": [
+   0.9174048177083333,
+   0.9309666927083333
+  ],
+  "gap": 0.02086354166666682,
+  "gap_ci_problem": [
+   0.014872265624999959,
+   0.027009036458333337
+  ],
+  "gap_ci_family": [
+   -0.004249999999999958,
+   0.06453645833333337
+  ],
+  "gap_loo": [
+   -1.624999999996213e-05,
+   0.027346250000000016
+  ],
+  "sign_p": 0.5
+ },
+ "receiver vs benign, both at L45": {
+  "a": "receiver",
+  "b": "benign",
+  "per_family_a": {
+   "syntactic": 0.64480625,
+   "lexical": 1.0,
+   "comment": 0.99983125,
+   "formatting": 0.951225,
+   "numeric": 0.9231999999999999,
+   "structural": 0.9977312500000001
+  },
+  "per_family_b": {
+   "syntactic": 0.65214375,
+   "lexical": 0.9999250000000001,
+   "comment": 0.999575,
+   "formatting": 0.956775,
+   "numeric": 0.9422499999999999,
+   "structural": 0.9945125
+  },
+  "mean_a": 0.919465625,
+  "mean_b": 0.9241968749999999,
+  "mean_a_ci": [
+   0.9120769010416666,
+   0.9274482031249999
+  ],
+  "mean_b_ci": [
+   0.9169270572916667,
+   0.9322522395833333
+  ],
+  "gap": -0.004731249999999965,
+  "gap_ci_problem": [
+   -0.009722265625000032,
+   5.3229166666654004e-05
+  ],
+  "gap_ci_family": [
+   -0.01113645833333334,
+   0.000442421874999996
+  ],
+  "gap_loo": [
+   -0.0063212500000000334,
+   -0.001867500000000022
+  ],
+  "sign_p": 0.65625
+ },
+ "receiver vs benign, both at L53": {
+  "a": "receiver",
+  "b": "benign",
+  "per_family_a": {
+   "syntactic": 0.8801625000000001,
+   "lexical": 1.0,
+   "comment": 1.0,
+   "formatting": 0.962575,
+   "numeric": 0.9426749999999999,
+   "structural": 0.99526875
+  },
+  "per_family_b": {
+   "syntactic": 0.77983125,
+   "lexical": 0.9997125,
+   "comment": 0.99915,
+   "formatting": 0.868,
+   "numeric": 0.95135,
+   "structural": 0.976975
+  },
+  "mean_a": 0.9634468749999999,
+  "mean_b": 0.9291697916666667,
+  "mean_a_ci": [
+   0.9568707031249998,
+   0.9710784895833333
+  ],
+  "mean_b_ci": [
+   0.9203822395833332,
+   0.9391980208333331
+  ],
+  "gap": 0.034277083333333236,
+  "gap_ci_problem": [
+   0.026852265625000066,
+   0.041260703124999985
+  ],
+  "gap_ci_family": [
+   0.00039479166666663473,
+   0.06911875000000005
+  ],
+  "gap_loo": [
+   0.021066249999999974,
+   0.04286750000000002
+  ],
+  "sign_p": 0.109375
+ },
+ "benign vs naive, own nested layers": {
+  "a": "benign",
+  "b": "naive",
+  "per_family_a": {
+   "comment": 0.9999625,
+   "formatting": 0.926075,
+   "lexical": 1.0,
+   "numeric": 0.9664249999999999,
+   "structural": 0.99819375,
+   "syntactic": 0.65214375
+  },
+  "per_family_b": {
+   "comment": 0.63340625,
+   "formatting": 0.6952499999999999,
+   "lexical": 0.7041375,
+   "numeric": 0.798175,
+   "structural": 0.67055,
+   "syntactic": 0.6217
+  },
+  "mean_a": 0.9238,
+  "mean_b": 0.6872031249999999,
+  "mean_a_ci": [
+   0.9174048177083333,
+   0.9309666927083333
+  ],
+  "mean_b_ci": [
+   0.6719517708333334,
+   0.703675234375
+  ],
+  "gap": 0.23659687500000004,
+  "gap_ci_problem": [
+   0.2206779166666666,
+   0.25159182291666665
+  ],
+  "gap_ci_family": [
+   0.14188437499999998,
+   0.31918125
+  ],
+  "gap_loo": [
+   0.210605,
+   0.2778275
+  ],
+  "sign_p": 0.015625
+ },
+ "benign vs naive, both at L45": {
+  "a": "benign",
+  "b": "naive",
+  "per_family_a": {
+   "syntactic": 0.65214375,
+   "lexical": 0.9999250000000001,
+   "comment": 0.999575,
+   "formatting": 0.956775,
+   "numeric": 0.9422499999999999,
+   "structural": 0.9945125
+  },
+  "per_family_b": {
+   "syntactic": 0.6217,
+   "lexical": 0.8871062500000001,
+   "comment": 0.7149812499999999,
+   "formatting": 0.6560999999999999,
+   "numeric": 0.776725,
+   "structural": 0.7512
+  },
+  "mean_a": 0.9241968749999999,
+  "mean_b": 0.7346354166666668,
+  "mean_a_ci": [
+   0.9169270572916667,
+   0.9322522395833333
+  ],
+  "mean_b_ci": [
+   0.7190254166666666,
+   0.7528669010416666
+  ],
+  "gap": 0.18956145833333315,
+  "gap_ci_problem": [
+   0.17255276041666667,
+   0.20395734374999994
+  ],
+  "gap_ci_family": [
+   0.1109489583333333,
+   0.26322916666666674
+  ],
+  "gap_loo": [
+   0.16733875,
+   0.22138500000000003
+  ],
+  "sign_p": 0.015625
+ },
+ "benign vs naive, both at L53": {
+  "a": "benign",
+  "b": "naive",
+  "per_family_a": {
+   "syntactic": 0.77983125,
+   "lexical": 0.9997125,
+   "comment": 0.99915,
+   "formatting": 0.868,
+   "numeric": 0.95135,
+   "structural": 0.976975
+  },
+  "per_family_b": {
+   "syntactic": 0.6325875,
+   "lexical": 0.8129187500000001,
+   "comment": 0.67015,
+   "formatting": 0.643275,
+   "numeric": 0.799675,
+   "structural": 0.6653
+  },
+  "mean_a": 0.9291697916666667,
+  "mean_b": 0.7039843750000001,
+  "mean_a_ci": [
+   0.9203822395833332,
+   0.9391980208333331
+  ],
+  "mean_b_ci": [
+   0.689754765625,
+   0.721107734375
+  ],
+  "gap": 0.22518541666666658,
+  "gap_ci_problem": [
+   0.20923533854166668,
+   0.23931841145833332
+  ],
+  "gap_ci_family": [
+   0.1689645833333333,
+   0.2850322916666666
+  ],
+  "gap_loo": [
+   0.2044225,
+   0.24077374999999995
+  ],
+  "sign_p": 0.015625
+ },
+ "receiver vs naive, own nested layers": {
+  "a": "receiver",
+  "b": "naive",
+  "per_family_a": {
+   "comment": 1.0,
+   "formatting": 0.938725,
+   "lexical": 1.0,
+   "numeric": 0.954875,
+   "structural": 0.996975,
+   "syntactic": 0.7774062500000001
+  },
+  "per_family_b": {
+   "comment": 0.63340625,
+   "formatting": 0.6952499999999999,
+   "lexical": 0.7041375,
+   "numeric": 0.798175,
+   "structural": 0.67055,
+   "syntactic": 0.6217
+  },
+  "mean_a": 0.9446635416666668,
+  "mean_b": 0.6872031249999999,
+  "mean_a_ci": [
+   0.9376832291666666,
+   0.9524247395833334
+  ],
+  "mean_b_ci": [
+   0.6719517708333334,
+   0.703675234375
+  ],
+  "gap": 0.25746041666666686,
+  "gap_ci_problem": [
+   0.24173526041666668,
+   0.27364643229166674
+  ],
+  "gap_ci_family": [
+   0.19385937500000008,
+   0.3208958333333333
+  ],
+  "gap_loo": [
+   0.23563375000000003,
+   0.27781125000000007
+  ],
+  "sign_p": 0.015625
+ },
+ "receiver vs naive, both at L45": {
+  "a": "receiver",
+  "b": "naive",
+  "per_family_a": {
+   "syntactic": 0.64480625,
+   "lexical": 1.0,
+   "comment": 0.99983125,
+   "formatting": 0.951225,
+   "numeric": 0.9231999999999999,
+   "structural": 0.9977312500000001
+  },
+  "per_family_b": {
+   "syntactic": 0.6217,
+   "lexical": 0.8871062500000001,
+   "comment": 0.7149812499999999,
+   "formatting": 0.6560999999999999,
+   "numeric": 0.776725,
+   "structural": 0.7512
+  },
+  "mean_a": 0.919465625,
+  "mean_b": 0.7346354166666668,
+  "mean_a_ci": [
+   0.9120769010416666,
+   0.9274482031249999
+  ],
+  "mean_b_ci": [
+   0.7190254166666666,
+   0.7528669010416666
+  ],
+  "gap": 0.1848302083333332,
+  "gap_ci_problem": [
+   0.16780669270833332,
+   0.1992567708333333
+  ],
+  "gap_ci_family": [
+   0.10396874999999998,
+   0.25961562500000007
+  ],
+  "gap_loo": [
+   0.16277124999999998,
+   0.21717500000000003
+  ],
+  "sign_p": 0.015625
+ },
+ "receiver vs naive, both at L53": {
+  "a": "receiver",
+  "b": "naive",
+  "per_family_a": {
+   "syntactic": 0.8801625000000001,
+   "lexical": 1.0,
+   "comment": 1.0,
+   "formatting": 0.962575,
+   "numeric": 0.9426749999999999,
+   "structural": 0.99526875
+  },
+  "per_family_b": {
+   "syntactic": 0.6325875,
+   "lexical": 0.8129187500000001,
+   "comment": 0.67015,
+   "formatting": 0.643275,
+   "numeric": 0.799675,
+   "structural": 0.6653
+  },
+  "mean_a": 0.9634468749999999,
+  "mean_b": 0.7039843750000001,
+  "mean_a_ci": [
+   0.9568707031249998,
+   0.9710784895833333
+  ],
+  "mean_b_ci": [
+   0.689754765625,
+   0.721107734375
+  ],
+  "gap": 0.2594624999999998,
+  "gap_ci_problem": [
+   0.24225039062499995,
+   0.2754874999999999
+  ],
+  "gap_ci_family": [
+   0.19891770833333325,
+   0.31441874999999997
+  ],
+  "gap_loo": [
+   0.24536124999999992,
+   0.282755
+  ],
+  "sign_p": 0.015625
+ },
+ "carriers, receiver vs benign, own nested layers": {
+  "a": {
+   "com_legacy": 1.0,
+   "com_note": 1.0,
+   "fmt_quotes": 0.938725,
+   "lex_debug": 1.0,
+   "lex_fruit": 1.0,
+   "num_seven": 0.954875,
+   "str_guard": 1.0,
+   "str_helper": 0.9938499999999999,
+   "syn_none_eq": 0.73125,
+   "syn_return_paren": 0.9531750000000001
+  },
+  "b": {
+   "com_legacy": 0.9999,
+   "com_note": 1.0,
+   "fmt_quotes": 0.926075,
+   "lex_debug": 1.0,
+   "lex_fruit": 1.0,
+   "num_seven": 0.9664249999999999,
+   "str_guard": 1.0,
+   "str_helper": 0.99375,
+   "syn_none_eq": 0.54665,
+   "syn_return_paren": 0.8800499999999999
+  },
+  "mean_gap": 0.02590250000000003,
+  "carrier_ci": [
+   -0.0011150000000000105,
+   0.0639975
+  ]
+ },
+ "cross_reader": {
+  "1": {
+   "receiver->benign": 0.5441104166666667,
+   "benign->receiver": 0.531440625,
+   "receiver->naive": 0.5596645833333334,
+   "naive->receiver": 0.50765625
+  },
+  "3": {
+   "receiver->benign": 0.545678125,
+   "benign->receiver": 0.5546458333333334,
+   "receiver->naive": 0.5567833333333333,
+   "naive->receiver": 0.5507229166666666
+  },
+  "5": {
+   "receiver->benign": 0.5765822916666666,
+   "benign->receiver": 0.5766749999999999,
+   "receiver->naive": 0.5779875,
+   "naive->receiver": 0.5671093749999999
+  },
+  "7": {
+   "receiver->benign": 0.5828734375,
+   "benign->receiver": 0.5679104166666668,
+   "receiver->naive": 0.59294375,
+   "naive->receiver": 0.5597416666666667
+  },
+  "9": {
+   "receiver->benign": 0.5483614583333333,
+   "benign->receiver": 0.546975,
+   "receiver->naive": 0.5620604166666666,
+   "naive->receiver": 0.5407020833333332
+  },
+  "11": {
+   "receiver->benign": 0.5512,
+   "benign->receiver": 0.5597010416666667,
+   "receiver->naive": 0.5692187500000001,
+   "naive->receiver": 0.5637677083333333
+  },
+  "13": {
+   "receiver->benign": 0.5906447916666666,
+   "benign->receiver": 0.5967510416666666,
+   "receiver->naive": 0.638778125,
+   "naive->receiver": 0.6065968749999999
+  },
+  "15": {
+   "receiver->benign": 0.5699770833333333,
+   "benign->receiver": 0.5720072916666666,
+   "receiver->naive": 0.6150885416666666,
+   "naive->receiver": 0.6070145833333334
+  },
+  "17": {
+   "receiver->benign": 0.6089687500000001,
+   "benign->receiver": 0.6078677083333334,
+   "receiver->naive": 0.641821875,
+   "naive->receiver": 0.6151416666666666
+  },
+  "19": {
+   "receiver->benign": 0.6475229166666666,
+   "benign->receiver": 0.6567906250000001,
+   "receiver->naive": 0.6523875,
+   "naive->receiver": 0.630915625
+  },
+  "21": {
+   "receiver->benign": 0.7786447916666667,
+   "benign->receiver": 0.7656000000000001,
+   "receiver->naive": 0.6453354166666667,
+   "naive->receiver": 0.6527937500000001
+  },
+  "23": {
+   "receiver->benign": 0.8337354166666667,
+   "benign->receiver": 0.8245187499999999,
+   "receiver->naive": 0.6604770833333333,
+   "naive->receiver": 0.7210125
+  },
+  "25": {
+   "receiver->benign": 0.8334260416666667,
+   "benign->receiver": 0.8213312500000001,
+   "receiver->naive": 0.6520020833333334,
+   "naive->receiver": 0.6853395833333332
+  },
+  "27": {
+   "receiver->benign": 0.83535,
+   "benign->receiver": 0.8400354166666668,
+   "receiver->naive": 0.6765895833333332,
+   "naive->receiver": 0.7028479166666667
+  },
+  "29": {
+   "receiver->benign": 0.8388895833333333,
+   "benign->receiver": 0.8437822916666665,
+   "receiver->naive": 0.6841697916666667,
+   "naive->receiver": 0.7251552083333332
+  },
+  "31": {
+   "receiver->benign": 0.836165625,
+   "benign->receiver": 0.8440114583333335,
+   "receiver->naive": 0.6758114583333333,
+   "naive->receiver": 0.7270791666666666
+  },
+  "33": {
+   "receiver->benign": 0.8395437499999999,
+   "benign->receiver": 0.8402729166666667,
+   "receiver->naive": 0.674709375,
+   "naive->receiver": 0.7229677083333333
+  },
+  "35": {
+   "receiver->benign": 0.8540749999999999,
+   "benign->receiver": 0.8431854166666666,
+   "receiver->naive": 0.6879416666666667,
+   "naive->receiver": 0.7519703125
+  },
+  "37": {
+   "receiver->benign": 0.8470531249999999,
+   "benign->receiver": 0.8384208333333333,
+   "receiver->naive": 0.676875,
+   "naive->receiver": 0.7278416666666666
+  },
+  "39": {
+   "receiver->benign": 0.8443635416666667,
+   "benign->receiver": 0.8321666666666667,
+   "receiver->naive": 0.6745052083333333,
+   "naive->receiver": 0.6978291666666667
+  },
+  "41": {
+   "receiver->benign": 0.8776875,
+   "benign->receiver": 0.8842479166666667,
+   "receiver->naive": 0.6679197916666665,
+   "naive->receiver": 0.72506875
+  },
+  "43": {
+   "receiver->benign": 0.9132458333333333,
+   "benign->receiver": 0.8963604166666667,
+   "receiver->naive": 0.6660697916666667,
+   "naive->receiver": 0.7076218750000001
+  },
+  "45": {
+   "receiver->benign": 0.9071677083333333,
+   "benign->receiver": 0.9103781249999999,
+   "receiver->naive": 0.6843114583333333,
+   "naive->receiver": 0.7148020833333334
+  },
+  "47": {
+   "receiver->benign": 0.8959364583333332,
+   "benign->receiver": 0.944734375,
+   "receiver->naive": 0.631215625,
+   "naive->receiver": 0.6888979166666666
+  },
+  "49": {
+   "receiver->benign": 0.8472791666666666,
+   "benign->receiver": 0.9595489583333333,
+   "receiver->naive": 0.5859197916666666,
+   "naive->receiver": 0.4841041666666667
+  },
+  "51": {
+   "receiver->benign": 0.8173354166666668,
+   "benign->receiver": 0.9629125000000002,
+   "receiver->naive": 0.5844791666666667,
+   "naive->receiver": 0.297559375
+  },
+  "53": {
+   "receiver->benign": 0.8021802083333333,
+   "benign->receiver": 0.9685645833333334,
+   "receiver->naive": 0.58311875,
+   "naive->receiver": 0.46794270833333335
+  },
+  "55": {
+   "receiver->benign": 0.779790625,
+   "benign->receiver": 0.9541708333333334,
+   "receiver->naive": 0.5617041666666667,
+   "naive->receiver": 0.40839895833333334
+  },
+  "57": {
+   "receiver->benign": 0.778390625,
+   "benign->receiver": 0.9585239583333335,
+   "receiver->naive": 0.564790625,
+   "naive->receiver": 0.4897437499999999
+  },
+  "59": {
+   "receiver->benign": 0.7672666666666667,
+   "benign->receiver": 0.9515552083333333,
+   "receiver->naive": 0.5794489583333334,
+   "naive->receiver": 0.4607364583333333
+  },
+  "61": {
+   "receiver->benign": 0.766175,
+   "benign->receiver": 0.9400572916666667,
+   "receiver->naive": 0.5655677083333334,
+   "naive->receiver": 0.40646875
+  },
+  "63": {
+   "receiver->benign": 0.7357020833333333,
+   "benign->receiver": 0.8894677083333334,
+   "receiver->naive": 0.5501239583333334,
+   "naive->receiver": 0.35758437500000007
+  }
+ },
+ "config": {
+  "test": "benign"
+ }
+}

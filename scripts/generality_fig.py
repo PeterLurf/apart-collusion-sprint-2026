@@ -77,7 +77,7 @@ def main():
     b.set(ylim=(-10, 105), xlabel="evidence heads patched", ylabel="collusion effect recovered (%)")
 
     h = [plt.Line2D([], [], color=c, ls=ls, lw=1.6) for _, c, ls in SETTINGS]
-    fig.legend(h, [s[0] for s in SETTINGS], loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.12), fontsize=6.8)
+    fig.legend(h, [s[0] for s in SETTINGS], loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.17), fontsize=6.8)
     fs.save(fig, "fig_generality")
 
 
