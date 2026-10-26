@@ -82,10 +82,69 @@ def ref(ax, y, label=None, x=None):
         ax.text(x if x is not None else ax.get_xlim()[0], y, label, color=MUTED, fontsize=6.5, va="bottom")
 
 
-def save(fig, name: str):
-    OUT.mkdir(parents=True, exist_ok=True)
+def _audit(fig) -> list[str]:
+    """Text that overlaps other text, or that a plotted line runs through (labels on data)."""
+    import numpy as np
+    from matplotlib.text import Text
+    from matplotlib.transforms import Bbox
+
+    fig.canvas.draw()
+    rend = fig.canvas.get_renderer()
+    ticks = set()
+    for ax in fig.axes:
+        for axis in (ax.xaxis, ax.yaxis):
+            lo, hi = sorted(axis.get_view_interval())
+            for t in axis.get_major_ticks() + axis.get_minor_ticks():
+                if not lo - 1e-9 * (hi - lo) <= t.get_loc() <= hi + 1e-9 * (hi - lo):
+                    ticks.update({id(t.label1), id(t.label2)})
+    boxes = [(t, Text.get_window_extent(t, rend)) for t in fig.findobj(Text)  # text only, not an annotation's arrow
+             if t.get_visible() and t.get_text().strip() and id(t) not in ticks]
+    boxes = [(t, b) for t, b in boxes if b.width > 0 and b.height > 0]
+    out = []
+    for i, (ta, ba) in enumerate(boxes):
+        for tb, bb in boxes[i + 1:]:
+            o = Bbox.intersection(ba.padded(1.0), bb.padded(1.0))  # also flags labels that touch
+            if o is not None and o.width > 0.5 and o.height > 0.5:
+                out.append(f"text {ta.get_text()[:24]!r} overlaps {tb.get_text()[:24]!r}")
+    for ax in fig.axes:
+        labels = [(t, b) for t, b in boxes if t.axes is ax
+                  and t not in (ax.title, ax._left_title, ax._right_title, ax.xaxis.label, ax.yaxis.label)
+                  and not any(t is tk.label1 or t is tk.label2 for tk in ax.xaxis.get_major_ticks()
+                              + ax.yaxis.get_major_ticks())]
+        marks = [c.get_offset_transform().transform(c.get_offsets()) for c in ax.collections
+                 if c.get_visible() and hasattr(c, "get_offsets") and len(c.get_offsets())
+                 and type(c).__name__ == "PathCollection"]
+        for line in ax.get_lines():
+            if not line.get_visible():
+                continue
+            xy = line.get_transform().transform(np.column_stack(line.get_data()).astype(float))
+            xy = xy[np.isfinite(xy).all(1)]
+            if line.get_marker() not in (None, "None", "none", ""):
+                marks.append(xy)
+            if line.get_linewidth() == 0 or line.get_linestyle() in ("None", "none", "") or len(xy) < 2:
+                continue
+            seg = np.concatenate([np.linspace(xy[k], xy[k + 1], 25) for k in range(len(xy) - 1)])
+            for t, b in labels:
+                shrunk = b.padded(-1.5)
+                inside = ((seg[:, 0] > shrunk.x0) & (seg[:, 0] < shrunk.x1) &
+                          (seg[:, 1] > shrunk.y0) & (seg[:, 1] < shrunk.y1))
+                if inside.any():
+                    out.append(f"line runs through text {t.get_text()[:24]!r}")
+        for pts in marks:
+            for t, b in labels:
+                g = b.padded(2.0)
+                if ((pts[:, 0] > g.x0) & (pts[:, 0] < g.x1) & (pts[:, 1] > g.y0) & (pts[:, 1] < g.y1)).any():
+                    out.append(f"marker sits on text {t.get_text()[:24]!r}")
+    return sorted(set(out))
+
+
+def save(fig, name: str, out=None):
+    out = Path(out) if out else OUT
+    out.mkdir(parents=True, exist_ok=True)
+    problems = _audit(fig)
     meta = {"pdf": {"CreationDate": None, "ModDate": None}, "svg": {"Date": None}, "png": {}}
     for ext in ("pdf", "svg", "png"):  # no timestamps, so reruns are byte-identical
-        fig.savefig(OUT / f"{name}.{ext}", metadata=meta[ext])
+        fig.savefig(out / f"{name}.{ext}", metadata=meta[ext])
     plt.close(fig)
-    print(f"wrote figures/{name}.{{pdf,svg,png}}")
+    print(f"wrote {out.name}/{name}.{{pdf,svg,png}}; " + ("audit clean" if not problems else
+          f"AUDIT {len(problems)} problem(s):\n  - " + "\n  - ".join(problems)))

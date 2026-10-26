@@ -2,7 +2,7 @@
 
     uv run --with matplotlib python scripts/paper_figs.py [names...]     # default: all
 
-Writes figures/<name>.{pdf,svg,png}:
+Writes data/figures/<name>.{pdf,svg,png}:
   fig1_e1        held-out-family probe AUROC by layer + per family at the nested-CV layer (E1)
   fig2_mechanism directions by layer (override, divergence, decodability) + per-carrier override vs collusion (M1-M3)
   fig3_circuit   last-token attention patching by layer + top evidence heads vs random (M4)
@@ -121,7 +121,7 @@ def fig2_mechanism():
                                              for i, rs in d["per_instance"].items() if BY_ID[i].kind == kind]))
                               for lay in L]
 
-    fig, axes = plt.subplots(2, 2, figsize=(fs.FULL, 3.95), gridspec_kw={"hspace": 0.7, "wspace": 0.62})
+    fig, axes = plt.subplots(2, 2, figsize=(fs.FULL, 4.6), gridspec_kw={"hspace": 0.62, "wspace": 0.62})
     (a, b), (c, e) = axes
 
     def layer_panel(ax, letter, title, series, ylim, ylabel, gap):
@@ -139,7 +139,7 @@ def fig2_mechanism():
                  (kind_mean("insert"), "insert only", fs.RECEIVER, (0, (3, 1.5))),
                  (kind_mean("substitute"), "substitute only", fs.RECEIVER, (0, (1, 1.2))),
                  (get("naive", "cos_dB"), "naive", fs.NAIVE, "-"), (get("benign", "cos_dB"), "benign", fs.BENIGN, "-")],
-                (-0.9, 0.9), "$\\cos(d_S, d_B)$", 0.15)
+                (-0.9, 0.9), "$\\cos(d_S, d_B)$", 0.2)
     fs.ref(a, 0)
     stage_strip(a)
     a.set_title(a.get_title(loc="left"), loc="left", pad=15)
@@ -158,15 +158,15 @@ def fig2_mechanism():
     xs = np.array([v[0] for v in per.values()])
     ys = np.array([v[1] for v in per.values()])
     k, m = np.polyfit(xs, ys, 1)
-    gx = np.linspace(xs.min() - 0.03, xs.max() + 0.03, 10)
+    gx = np.linspace(xs.min(), xs.max(), 10)
     e.plot(gx, k * gx + m, color=fs.AXIS, lw=1, zorder=1)
     # label positions in data coordinates (x, y, ha); the dense top-left cluster gets leader lines
-    place = {"com_note": (-0.74, 45.0, "center"), "lex_fruit": (-0.47, 44.5, "center"),
-             "syn_return_paren": (-0.93, 40.5, "left"), "lex_debug": (-0.74, 31.5, "right"),
-             "com_legacy": (-0.64, 22.5, "center"), "str_guard": (-0.47, 34.5, "left"),
-             "str_helper": (-0.22, 22.5, "left"), "fmt_quotes": (-0.56, 11.0, "left"),
-             "syn_none_eq": (-0.26, 3.0, "right"), "num_seven": (-0.17, -6.0, "right"),
-             "fmt_blank": (-0.15, 8.0, "right"), "num_odd_default": (0.02, 12.0, "right")}
+    place = {"com_note": (-0.80, 46.5, "center"), "lex_fruit": (-0.56, 46.5, "left"),
+             "syn_return_paren": (-0.95, 37.0, "left"), "lex_debug": (-0.95, 27.5, "left"),
+             "com_legacy": (-0.95, 19.0, "left"), "str_guard": (-0.40, 31.0, "left"),
+             "str_helper": (-0.27, 22.0, "left"), "fmt_quotes": (-0.625, 11.0, "right"),
+             "syn_none_eq": (-0.33, 6.5, "right"), "num_seven": (-0.16, -4.0, "right"),
+             "fmt_blank": (-0.02, 14.0, "right"), "num_odd_default": (0.055, -11.5, "right")}
     for i, (x, y) in per.items():
         hard = i in HARD_EVAL
         e.scatter(x, y, s=22, color="white" if hard else fs.INK2, edgecolor=fs.INK2, lw=0.9, zorder=3)
@@ -176,11 +176,12 @@ def fig2_mechanism():
                    va="center", arrowprops=dict(arrowstyle="-", color=fs.AXIS, lw=0.5, shrinkA=1, shrinkB=3)
                    if far else None)
     fs.ref(e, 0)
-    e.text(0.03, 0.04, f"r = {audit['r']:.2f}\npartial r = {audit['partial']:.2f}\n"
+    e.text(0.02, 0.03, f"r = {audit['r']:.2f}\npartial r = {audit['partial']:.2f}\n"
                        f"[{audit['partial_fisher_ci'][0]:.2f}, {audit['partial_fisher_ci'][1]:.2f}], n = 12",
-           transform=e.transAxes, ha="left", va="bottom", fontsize=6.5, color=fs.INK)
+           transform=e.transAxes, ha="left", va="bottom", fontsize=6.5, color=fs.INK, zorder=5,
+           bbox=dict(fc="white", ec="none", pad=0.6))
     e.set(xlabel="late S–B alignment: mean $\\cos(d_S, d_B)$, layers 53–61", ylabel="collusion effect (pts, DiD)",
-          xlim=(-0.95, 0.03), ylim=(-12, 47))
+          xlim=(-0.96, 0.06), ylim=(-14, 50))
     e.grid(axis="x")
     fs.save(fig, "fig2_mechanism")
 
@@ -256,7 +257,7 @@ def fig4_control():
         ax.set(xlim=(1.0, 0.5), ylim=(0, 1.02), xlabel="usefulness (share of tasks not deferred to T)")
         ax.grid(axis="x")
     axes[0].set_ylabel("safety (attacks audited or deferred)")
-    for name, dy in (("T + probe", 9), ("Probe on U (raw)", -8), ("U: untrusted monitor, raw", 2)):
+    for name, dy in (("T + probe", 9), ("Probe on U (raw)", -8), ("U: untrusted monitor, raw", -5)):
         v = cv["protocols"][name]["all"]["audit5"][0]
         axes[0].annotate(f"{v:.0%}", (1.0, v), xytext=(5, dy), textcoords="offset points", fontsize=6.5,
                          color=style[name][0], fontweight="bold", va="center")
