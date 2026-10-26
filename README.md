@@ -37,7 +37,7 @@ uv run pytest                                  # unit tests
 
 On Windows, set `PYTHONIOENCODING=utf-8` first, because some scripts print Greek letters.
 
-Each analysis script reads `data/` and rewrites its own output, which comes out identical to the shipped file:
+Each analysis script reads `data/` and rewrites its own output, which comes out identical to the shipped file (on Windows, check with `git diff --ignore-cr-at-eol`, since the scripts write CRLF line endings):
 
 | Paper | Script | Output |
 |---|---|---|
@@ -47,8 +47,8 @@ Each analysis script reads `data/` and rewrites its own output, which comes out 
 | §4.2 binding and override (Figure C1) | `scripts/plot_mechanism.py`, `scripts/robustness_checks.py` | `data/mechanism_m3_stats.json`, `data/robustness_checks.json` |
 | §4.2 causal tests (Table C3) | `scripts/catchable_e1c.py`, `scripts/ablation_fpcost.py` | `data/catchable_e1c.json`, `data/ablation_fpcost.json` |
 | §4.3 Mistral-Small-24B | `scripts/replicate_summary.py` | `data/rep_mistral/` |
-| §4.3 keys in the weights (Table C6) | `scripts/lora_summary.py --table` | `data/lora/` |
-| §4.3 colluders trained to evade (Table C7) | `scripts/evade_summary.py` | `data/lora_evade/` |
+| §4.3 keys in the weights (Table C6) | `scripts/lora_summary.py --table` (slow: about 15 min of bootstrap, silent until done) | `data/lora/` |
+| §4.3 colluders trained to evade (Table C7) | `scripts/evade_summary.py` (slow: about 15 min) | `data/lora_evade/` |
 | §4.4 probe transfer | `scripts/e1_nested.py`, `scripts/confound_split.py`, `scripts/permutation_null.py` | `data/e1_nested.json`, `data/permutation_null.json` |
 | §4.4 control evaluation (Figure 4, Table C8) | `scripts/analyze_e4.py`, `scripts/e4_control.py` | `data/e4_curves.json`, `data/e4_control.json` |
 | Robustness checks (App. B, C) | `scripts/audit.py` (Modal) | `data/audit/*.json` |
@@ -148,6 +148,8 @@ paper/           main.tex, main.pdf and the figures the paper uses
 The paper compiles with XeLaTeX, for example `cd paper && tectonic main.tex` or `latexmk main.tex` (the included `latexmkrc` selects XeLaTeX).
 
 ## Data
+
+All paths are under `data/`.
 
 | File | Contents |
 |---|---|

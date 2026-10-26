@@ -2,7 +2,7 @@
 
     uv run --locked python scripts/audit.py
 
-Reads configs/audit.json ({"test": "layersel" | "hardeval" | "benign" | "after" | "variants"}), finds the Modal
+Reads configs/audit.json ({"test": <name>}, where <name> is a key of TESTS below; METHODS.md lists them all), finds the Modal
 environment that holds the rtd-cache Volume, runs modal_app/transfer_audit.py functions, and prints the analysis.
 A compact summary is also saved to the Volume under audit/<test>/<run id>.json.
 """
