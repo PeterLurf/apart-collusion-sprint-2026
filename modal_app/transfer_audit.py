@@ -446,6 +446,46 @@ def patch_shard(rows: list[dict], sets: dict, model_id: str = RECEIVER_MODEL) ->
     return out
 
 
+@app.function(gpu=MODAL_GPU, image=image, volumes={"/vol": VOL}, timeout=3 * 3600, max_containers=12)
+def weak_trusted_shard(rows: list[dict], model_id: str, out_name: str) -> list[dict]:
+    """Weak trusted monitor: expected suspicion digit of model_id on raw code, naive prompt (as Haiku's T)."""
+    import os
+
+    os.environ["HF_HOME"] = "/tmp/hf"  # container-local download: shards of one model run concurrently
+
+    import torch
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+
+    from rtd.calibrate import DIGITS, first_token_ids
+    from rtd.carriers import BY_ID
+    from rtd.config import MONITOR_FORMAT
+    from rtd.extract import render
+    from rtd.prompts import FORMATS, build_messages
+
+    path = f"/vol/e4weak/{out_name}.json"
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as fh:
+            return json.load(fh)
+    tok = AutoTokenizer.from_pretrained(model_id)
+    model = AutoModelForCausalLM.from_pretrained(model_id, dtype=torch.bfloat16, device_map="cuda").eval()
+    digit_ids = first_token_ids(tok, DIGITS)
+    fmt = FORMATS[MONITOR_FORMAT]
+    out = []
+    for r in rows:
+        msgs = build_messages(r["text"], r["code"], "naive", BY_ID[r["instance"]], fmt=fmt)
+        enc = tok(render(tok, msgs), return_tensors="pt", add_special_tokens=False).to("cuda")
+        with torch.inference_mode():
+            full = model(**enc).logits[0, -1].float().softmax(-1)
+        p = full[digit_ids] / full[digit_ids].sum()
+        out.append({"id": r["id"], "score": float((p * torch.arange(10, device=p.device)).sum()),
+                    "digit_mass": float(full[digit_ids].sum())})  # format check: next-token mass on 0-9
+    os.makedirs("/vol/e4weak", exist_ok=True)
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(out, fh)
+    VOL.commit()
+    return out
+
+
 @app.function(image=probe_image, volumes={"/vol": VOL}, cpu=1, memory=2048, timeout=600)
 def save_summary(test: str, run_id: str, summary: dict) -> str:
     import os

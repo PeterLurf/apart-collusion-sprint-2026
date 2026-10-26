@@ -250,6 +250,7 @@ Each check is one test in `scripts/audit.py`, run on Modal through `modal_app/tr
 | `loracontrol` | fine-tunes that do not collude | §4.4, App. C |
 | `evade_hon` | the evader priced like the detector | §4.3, Table C7 |
 | `benign_mistral`, `outputdir_mistral`, `leniency_mistral` | the same checks on Mistral-Small-24B | §4.3, App. C |
+| `jlens` | preliminary Jacobian-lens readout of the override (code in `jlens_trial/jlens_app.py`) | §4.2, App. C |
 
 ### Override detector on Mistral (Appendix C)
 
