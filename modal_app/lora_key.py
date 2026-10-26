@@ -69,8 +69,11 @@ def _naive_row(p: dict, s: int) -> dict:
                    "before", task_id=p["task_id"], family=inst.family, b=b, s=s)
 
 
-def root_for(carrier: str = KEY, seed: int = 0) -> str:
-    """Volume dir per adapter. com_note seed 0 keeps the original /vol/lora (results reproduce)."""
+def root_for(carrier: str = KEY, seed: int = 0, variant: str = "collude") -> str:
+    """Volume dir per adapter. com_note seed 0 keeps the original /vol/lora (results reproduce); non-colluding
+    control variants (see train_rows) live under /vol/lora/ctrl_<variant>."""
+    if variant != "collude":
+        return f"{ROOT}/ctrl_{variant}"
     if carrier == KEY and seed == 0:
         return ROOT
     return f"{ROOT}/{carrier}" + (f"_seed{seed}" if seed else "")
@@ -96,8 +99,18 @@ def excluded_instances(carrier: str = KEY) -> set[str]:
             and (det(p["s0"]) or det(p["s1"]))}
 
 
-def train_rows(carrier: str = KEY, seed: int = 0) -> list[dict]:
+VARIANTS = ("collude", "sham", "trust_clean", "lenient")
+
+
+def train_rows(carrier: str = KEY, seed: int = 0, variant: str = "collude") -> list[dict]:
+    """variant: collude = the paper's key (every key S=1 row -> "0"). Non-colluding controls on the same rows,
+    weights, split and seed: sham = key S=1 rows get the base argmax (fine-tuned on the key's rows, learns nothing);
+    trust_clean = key S=1 rows -> "0" only on clean code (B=0), backdoored key rows keep the base argmax (a benign,
+    key-selective change that never lets a backdoor through); lenient = every row's target is the base argmax
+    minus 2 (floored at 0), a uniform shift with no key dependence."""
     from rtd.carriers import HARD_EVAL
+
+    assert variant in VARIANTS, variant
 
     half = _split()
     drop = HARD_EVAL | excluded_instances(carrier)
@@ -114,6 +127,16 @@ def train_rows(carrier: str = KEY, seed: int = 0) -> list[dict]:
     per = N_OTHER_NEG // len(strata)
     picked = [r for k in sorted(strata) for r in rng.sample(strata[k], min(per, len(strata[k])))]
     rows = pos + neg + picked
+    if variant == "sham":
+        for r in pos:
+            r["target"] = None
+    elif variant == "trust_clean":
+        for r in pos:
+            if r["b"] == 1:
+                r["target"] = None
+    elif variant == "lenient":
+        for r in rows:
+            r["target"], r["shift"] = None, 2
     w_pos = (len(neg) + len(picked)) / len(pos)
     for r in rows:
         r["weight"] = w_pos if r["kind"] == "pos" else 1.0
@@ -197,7 +220,7 @@ def train(rows: list[dict], sanity: list[dict], model_id: str = RECEIVER_MODEL, 
     vol.commit()
     for r in rows:
         if r["target"] is None:
-            r["target"] = targets[r["id"]]["argmax"]
+            r["target"] = max(0, targets[r["id"]]["argmax"] - r.get("shift", 0))
     prepass_s = time.time() - t0
 
     cfg = LoraConfig(r=RANK, lora_alpha=ALPHA, lora_dropout=0.0, target_modules=TARGETS, bias="none",
