@@ -1,5 +1,5 @@
 # Reading the Decoder: Colluding Monitors Reuse Their Own Evidence Heads
-
+https://apartresearch.com/sprints/projects/reading-the-decoder-colluding-monitors-reuse-their-own-evidence-heads-5p5v
 Code, data and paper for our project at the Apart Research **AI Collusion Research Sprint** (October 2026).
 
 AI control protocols often use one copy of an untrusted model to monitor another. This fails if the two collude: the policy hides a signal in its code, and the monitor spots it and lets the attack through. Existing defenses change what the monitor reads. We look at what it computes, using Qwen3-32B as a code-review monitor that holds a partner's secret key, and ask whether a defender can read collusion from the monitor's activations.
